@@ -215,7 +215,7 @@ module VisModelJS {
                 }
             };
             this.EventMapLayer.addEventListener('mousewheel', OnWheel);
-            this.ContentLayer.addEventListener('mousewheel', OnWheel);
+            //this.ContentLayer.addEventListener('mousewheel', OnWheel);
         }
 
         /**
