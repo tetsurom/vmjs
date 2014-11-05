@@ -12,6 +12,11 @@ span {
 	box-sizing: content-box;
     font-family: Arial, Meiryo;
     word-wrap: break-word;
+	pointer-events: initial;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 }
 
 .node-variable {
@@ -25,7 +30,7 @@ span {
 
 .node-peg {
 	padding: 5px 10px;
-	width : 180px;
+	width : 130px;
 }
 
 .node h4 {

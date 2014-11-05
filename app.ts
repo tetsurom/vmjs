@@ -1,32 +1,4 @@
-﻿
-
-
-// ***************************************************************************
-// Copyright (c) 2014, AssureNote project authors. All rights reserved.
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
-// *  Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimer.
-// *  Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-// TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// **************************************************************************
-
-///<reference path='d.ts/jquery.d.ts'/>
-var Debug = <any>{};
+﻿var Debug = <any>{};
 
 class PegNodeShape extends VisModelJS.Shape {
     BodyRect: SVGRectElement;
@@ -39,6 +11,28 @@ class PegNodeShape extends VisModelJS.Shape {
         Master.setAttribute("y", "-13px");
         return Master;
     })();
+
+    PrepareHTMLContent(): void {
+        if (this.Content == null) {
+            var div = document.createElement("div");
+            this.Content = div;
+
+            div.id = this.NodeView.Label;
+            div.setAttribute("data-nodelabel", this.NodeView.Label);
+
+            if (this.NodeView.Label) {
+                var h4 = document.createElement("h4");
+                h4.textContent = "#" + this.NodeView.Label.split("#")[1];
+                div.appendChild(h4);
+            }
+            if (this.NodeView.Content) {
+                var p = document.createElement("p");
+                p.innerText = this.NodeView.Content.trim();
+                div.appendChild(p);
+            }
+            this.UpdateHtmlClass();
+        }
+    }
 
     PrepareSVGContent(): void {
         super.PrepareSVGContent();
@@ -80,18 +74,20 @@ $(() => {
 
     VisModelJS.ShapeFactory.SetFactory(new PegShapeFactory());
 
-    var panel = new VisModelJS.VisualModelPanel(document.getElementById("content"));
+    var root = <HTMLDivElement>document.getElementById("content");
+    var panel = new VisModelJS.VisualModelPanel(root);
 
+    var i = 0;
     var TopNode = new VisModelJS.NodeView();
-    TopNode.Label = "#JSON";
+    TopNode.Label = (i++).toString() + "#JSON";
     var SecondNode = new VisModelJS.NodeView();
-    SecondNode.Label = "#Array";
+    SecondNode.Label = (i++).toString() + "#Array";
     TopNode.AppendChild(SecondNode);
-    ["#KeyValue", "#KeyValue"].forEach((name) => {
+    [(i++).toString() + "#KeyValue", (i++).toString() + "#KeyValue"].forEach((name) => {
         var KVNode = new VisModelJS.NodeView();
         KVNode.Label = name;
         SecondNode.AppendChild(KVNode);
-        ["#Key", "#Value"].forEach((name) => {
+        [(i++).toString() + "#Key", (i++).toString() + "#Value"].forEach((name) => {
             var Node = new VisModelJS.NodeView();
             Node.Label = name;
             Node.Content = "hoge";
@@ -101,5 +97,10 @@ $(() => {
 
     panel.InitializeView(TopNode);
     panel.Draw();
-
+    panel.Viewport.SetCamera(TopNode.GetCenterGX(), TopNode.GetCenterGY() + panel.Viewport.GetPageHeight() / 3, 1);
+    panel.addEventListener("dblclick", event => {
+        var node = (<VisModelJS.NodeViewEvent>event).node;
+        node.SetIsFolded(!node.IsFolded());
+        panel.Draw(panel.TopNodeView.Label, 300, node);
+    });
 });

@@ -28,7 +28,7 @@
     <TypeScriptCompile Include="d.ts\pointer.d.ts" />
     <TypeScriptCompile Include="src\vismodeljs\LayoutEngine.ts" />
     <TypeScriptCompile Include="src\vismodeljs\NodeView.ts" />
-    <TypeScriptCompile Include="src\vismodeljs\PictgramPanel.ts" />
+    <TypeScriptCompile Include="src\vismodeljs\VisualModelPanel.ts" />
     <TypeScriptCompile Include="src\vismodeljs\Shape.ts" />
     <TypeScriptCompile Include="src\vismodeljs\Utils.ts" />
     <TypeScriptCompile Include="src\vismodeljs\Viewport.ts" />

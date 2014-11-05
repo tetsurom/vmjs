@@ -13,8 +13,9 @@ module VisModelJS {
         export function getNodeLabelFromEvent(event: Event): string {
             var element = <HTMLElement>event.target || <HTMLElement>event.srcElement;
             while (element != null) {
-                if (element.id != "") {
-                    return element.id;
+                var label = element.getAttribute("data-nodelabel");
+                if (label != null && label != "") {
+                    return label;
                 }
                 element = element.parentElement;
             }
@@ -202,10 +203,10 @@ module VisModelJS {
         }
 
         export var requestAnimationFrame: (Callback: FrameRequestCallback) => number
-            = UserAgant.isAnimationFrameEnabled() ? requestAnimationFrame : ((c) => setTimeout(c, 16.7));
+            = UserAgant.isAnimationFrameEnabled() ? window.requestAnimationFrame.bind(window) : ((c) => setTimeout(c, 16.7));
 
         export var cancelAnimationFrame: (Handle: number) => void
-            = UserAgant.isAnimationFrameEnabled() ? cancelAnimationFrame : clearTimeout;
+            = UserAgant.isAnimationFrameEnabled() ? window.cancelAnimationFrame.bind(window) : window.clearTimeout.bind(window);
 
         export var getTime: () => number
             = UserAgant.isPerformanceEnabled() ? performance.now.bind(performance) : Date.now.bind(Date);

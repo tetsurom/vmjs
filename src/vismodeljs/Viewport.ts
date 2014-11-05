@@ -86,10 +86,10 @@ module VisModelJS {
         OnEndDrag: (Viewport: ViewportManager) => void;
 
         OnPointerEvent(e: PointerEvent, Screen: ViewportManager) {
-            var Log = (e: PointerEvent) => {
-                console.log("pointer#" + e.pointerId + " " + e.type.substr(7));
-                console.log("#pointers " + Object.keys(this.Pointers).length)
-            }
+            //var Log = (e: PointerEvent) => {
+            //    console.log("pointer#" + e.pointerId + " " + e.type.substr(7));
+            //    console.log("#pointers " + Object.keys(this.Pointers).length)
+            //}
             switch (e.type) {
                 case "pointerdown":
                     if (e.pointerType == "mouse" && e.button != 0) {
@@ -169,9 +169,9 @@ module VisModelJS {
         }
 
         OnDoubleTap(e: PointerEvent, Screen: ViewportManager) {
-            var width: number = Screen.ContentLayer.clientWidth;
-            var height: number = Screen.ContentLayer.clientHeight;
-            var pointer = this.Pointers[0];
+            //var width: number = Screen.ContentLayer.clientWidth;
+            //var height: number = Screen.ContentLayer.clientHeight;
+            //var pointer = this.Pointers[0];
         }
 
         OnMouseWheel(e: { deltaX: number; deltaY: number }, Screen: ViewportManager) {
@@ -187,35 +187,33 @@ module VisModelJS {
         private CameraGX: number = 0;
         private CameraGY: number = 0;
         private Scale: number = 1.0;
-        private PageWidth: number = window.innerWidth;
-        private PageHeight: number = window.innerHeight;
+        private PageWidth: number;
+        private PageHeight: number;
         private CameraCenterPageX: number;
         private CameraCenterPageY: number;
         public IsPointerEnabled: boolean = true;
         public OnScroll: (Viewport: ViewportManager) => void;
         public CameraLimitRect: Rect;
 
-        constructor(public SVGLayer: SVGGElement, public EventMapLayer: HTMLDivElement, public ContentLayer: HTMLDivElement) {
+        constructor(private Panel: VisualModelPanel) {
             super();
+
             window.addEventListener("resize", (e) => { this.UpdatePageRect(); });
+            this.UpdatePageSize();
             this.UpdatePageRect();
             this.SetCameraPageCenter(this.GetPageCenterX(), this.GetPageCenterY());
-            Utils.setTransformOriginToElement(this.ContentLayer, "left top");
-            //Utils.setTransformOriginToElement(this.ControlLayer, "left top");
+            Utils.setTransformOriginToElement(this.Panel.ContentLayer, "left top");
             this.UpdateAttr();
             var OnPointer = (e: PointerEvent) => { if (this.IsPointerEnabled) { this.ScrollManager.OnPointerEvent(e, this); } };
             ["down", "move", "up", "out", "leave", "cancel"].forEach((Name) => {
-                this.EventMapLayer.addEventListener("pointer" + Name, OnPointer, false);
+                this.Panel.RootElement.addEventListener("pointer" + Name, OnPointer, false);
             });
-            //this.EventMapLayer.addEventListener("gesturedoubletap", (e: PointerEvent) => { this.ScrollManager.OnDoubleTap(e, this); }, false);
-            //BackGroundLayer.addEventListener("gesturescale", OnPointer, false);
             var OnWheel = (e: any) => {
                 if (this.IsPointerEnabled) {
                     this.ScrollManager.OnMouseWheel(e, this);
                 }
             };
-            this.EventMapLayer.addEventListener('mousewheel', OnWheel);
-            //this.ContentLayer.addEventListener('mousewheel', OnWheel);
+            this.Panel.EventMapLayer.addEventListener('mousewheel', OnWheel);
         }
 
         /**
@@ -475,13 +473,18 @@ module VisModelJS {
             });
         }
 
+        private UpdatePageSize() {
+            var rootRect = this.Panel.RootElement.getBoundingClientRect();
+            this.PageWidth = rootRect.width;
+            this.PageHeight = rootRect.height;
+        }
+
         private UpdatePageRect(): void {
             var CameraCenterXRate = this.CameraCenterPageX / this.PageWidth;
             var CameraCenterYRate = this.CameraCenterPageY / this.PageHeight;
             var CameraPX = this.PageXFromGX(this.CameraGX);
             var CameraPY = this.PageYFromGY(this.CameraGY);
-            this.PageWidth = window.innerWidth;
-            this.PageHeight = window.innerHeight;
+            this.UpdatePageSize();
             this.SetCameraPageCenter(this.PageWidth * CameraCenterXRate, this.PageHeight * CameraCenterYRate);
             this.UpdateAttr();
         }
@@ -510,9 +513,8 @@ module VisModelJS {
             if (!isNaN(OffsetPageX) && !isNaN(OffsetPageY)) {
                 var attr: string = ViewportManager.CreateTranformAttr(OffsetPageX, OffsetPageY, this.Scale);
                 var style: string = ViewportManager.CreateTransformStyle(OffsetPageX, OffsetPageY, this.Scale);
-                this.SVGLayer.setAttribute("transform", attr);
-                Utils.setTransformToElement(this.ContentLayer, style);
-                //Utils.setTransformToElement(this.ControlLayer, style);
+                this.Panel.SVGLayer.setAttribute("transform", attr);
+                Utils.setTransformToElement(this.Panel.ContentLayer, style);
             }
             if (this.OnScroll) {
                 this.OnScroll(this);

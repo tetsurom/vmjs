@@ -92,44 +92,7 @@ module VisModelJS {
             return null;
         }
     }
-    /*
 
-    export class DCaseShapeFactory extends ShapeFactory {
-        CreateShape(Node: NodeView): Shape {
-            switch (Node.GetNodeType()) {
-                case GSNType.Goal:
-                    return new GSNGoalShape(Node);
-                case GSNType.Context:
-                case GSNType.Justification:
-                case GSNType.Assumption:
-                case GSNType.Exception:
-                    return new GSNContextShape(Node);
-                case GSNType.Strategy:
-                    return new GSNStrategyShape(Node);
-                case GSNType.Evidence:
-                    return new DCaseEvidenceShape(Node);
-            }
-        }
-    }
-
-    export class GSNShapeFactory extends ShapeFactory {
-        CreateShape(Node: NodeView): Shape {
-            switch (Node.GetNodeType()) {
-                case GSNType.Goal:
-                    return new GSNGoalShape(Node);
-                case GSNType.Context:
-                case GSNType.Justification:
-                case GSNType.Assumption:
-                case GSNType.Exception:
-                    return new GSNContextShape(Node);
-                case GSNType.Strategy:
-                    return new GSNStrategyShape(Node);
-                case GSNType.Evidence:
-                    return new GSNEvidenceShape(Node);
-            }
-        }
-    }
-*/
     export class Shape {
         ShapeGroup: SVGGElement;
         ArrowPath: SVGPathElement;
@@ -166,12 +129,6 @@ module VisModelJS {
             }
             Shape.AsyncSizePrefetcher.AddShape(this);
         }
-
-        //ClearSizeCache(): void {
-        //    this.NodeWidthCache = GSNShape.DefaultWidth;
-        //    this.NodeHeightCache = 0;
-        //    GSNShape.AsyncSizePrefetcher.AddShape(this);
-        //}
 
         IsSizeCached(): boolean {
             return this.NodeHeightCache != 0 && this.NodeWidthCache != 0
@@ -219,7 +176,7 @@ module VisModelJS {
 
         GetTreeWidth(): number {
             if (this.TreeBoundingBox.width == 0) {
-                this.TreeBoundingBox.width = 250; //FIXME
+                this.TreeBoundingBox.width = 150; //FIXME
             }
             return this.TreeBoundingBox.width;
         }
@@ -233,7 +190,7 @@ module VisModelJS {
 
         GetHeadWidth(): number {
             if (this.HeadBoundingBox.width == 0) {
-                this.HeadBoundingBox.width = 250; //FIXME
+                this.HeadBoundingBox.width = 150; //FIXME
             }
             return this.HeadBoundingBox.width;
         }
@@ -271,13 +228,13 @@ module VisModelJS {
             return doc.replace(/\r\n|\n|\r/g, '<br>');
         }
 
-        private PrepareHTMLContent(): void {
+        PrepareHTMLContent(): void {
             if (this.Content == null) {
                 var div = document.createElement("div");
                 this.Content = div;
 
-                div.style.position = "absolute";
                 div.id = this.NodeView.Label;
+                div.setAttribute("data-nodelabel", this.NodeView.Label);
 
                 if (this.NodeView.Label) {
                     var h4 = document.createElement("h4");
