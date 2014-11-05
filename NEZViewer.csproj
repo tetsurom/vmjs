@@ -19,30 +19,21 @@
   <ItemGroup>
     <Content Include="app.css" />
     <Content Include="index.html" />
-    <Content Include="src\LayoutEngine.js" />
-    <Content Include="src\NodeView.js" />
-    <Content Include="src\PictgramPanel.js" />
-    <Content Include="src\Shape.js" />
-    <Content Include="src\Utils.js" />
-    <Content Include="src\Viewport.js" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
-    <TypeScriptCompile Include="src\LayoutEngine.ts" />
-    <TypeScriptCompile Include="src\NodeView.ts" />
-    <TypeScriptCompile Include="src\PictgramPanel.ts" />
-    <TypeScriptCompile Include="src\Shape.ts" />
-    <TypeScriptCompile Include="src\Utils.ts" />
-    <TypeScriptCompile Include="src\Viewport.ts" />
+    <TypeScriptCompile Include="d.ts\html5.d.ts" />
+    <TypeScriptCompile Include="d.ts\jquery.d.ts" />
+    <TypeScriptCompile Include="d.ts\pointer.d.ts" />
+    <TypeScriptCompile Include="src\vismodeljs\LayoutEngine.ts" />
+    <TypeScriptCompile Include="src\vismodeljs\NodeView.ts" />
+    <TypeScriptCompile Include="src\vismodeljs\PictgramPanel.ts" />
+    <TypeScriptCompile Include="src\vismodeljs\Shape.ts" />
+    <TypeScriptCompile Include="src\vismodeljs\Utils.ts" />
+    <TypeScriptCompile Include="src\vismodeljs\Viewport.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="src\LayoutEngine.js.map" />
-    <Content Include="src\NodeView.js.map" />
-    <Content Include="src\PictgramPanel.js.map" />
-    <Content Include="src\Shape.js.map" />
-    <Content Include="src\Utils.js.map" />
-    <Content Include="src\Viewport.js.map" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

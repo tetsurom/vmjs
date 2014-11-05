@@ -5,3 +5,44 @@
 span {
     font-style: italic;
 }
+
+
+.node {
+	position: absolute;
+	box-sizing: content-box;
+    font-family: Arial, Meiryo;
+    word-wrap: break-word;
+}
+
+.node-variable {
+	font-weight: bold;
+}
+
+.node-variable-undefined {
+	font-weight: bold;
+	color: Gray;
+}
+
+.node-peg {
+	padding: 5px 10px;
+	width : 180px;
+}
+
+.node h4 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.node p {
+    margin-bottom: 15px;
+}
+
+.node-default {
+	fill: rgba(255,255,255,1.0);
+	stroke: black;
+	stroke-width: 2;
+}
+
+.node-selected {
+	stroke: orange;
+}
