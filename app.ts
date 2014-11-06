@@ -63,6 +63,85 @@ class PegShapeFactory extends VisModelJS.ShapeFactory {
     }
 }
 
+var sampleData = {
+    tag: "JSON",
+    value: [
+        {
+            tag: "KeyValue",
+            value: [
+                {
+                    tag: "String",
+                    value: "name"
+                },
+                {
+                    tag: "String",
+                    value: "taro"
+                }
+            ]
+        },
+        {
+            tag: "KeyValue",
+            value: [
+                {
+                    tag: "String",
+                    value: "id"
+                },
+                {
+                    tag: "Integer",
+                    value: "1"
+                }
+            ]
+        },
+        {
+            tag: "KeyValue",
+            value: [
+                {
+                    tag: "String",
+                    value: "friends"
+                },
+                {
+                    tag: "List",
+                    value: [
+                        {
+                            tag: "String",
+                            value: "yamada"
+                        },
+                        {
+                            tag: "String",
+                            value: "kondo"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+};
+
+interface P4DNode {
+    tag: string;
+    value: Object;
+}
+
+
+
+var createNodeViewFromP4DJson = function () {
+    var i = 0;
+    return function (json: P4DNode) {
+        var node = new VisModelJS.NodeView();
+        node.Label = (i++).toString() + "#" + json.tag;
+        if (json.value) {
+            if ((<any>json.value.constructor).name == "Array") {
+                (<P4DNode[]>json.value).forEach(json => {
+                    node.AppendChild(createNodeViewFromP4DJson(json));
+                });
+            } else {
+                node.Content = json.value.toString();
+            }
+        }
+        return node;
+    };
+} ();
+
 $(() => {
 
     //Browser detection
@@ -77,23 +156,7 @@ $(() => {
     var root = <HTMLDivElement>document.getElementById("content");
     var panel = new VisModelJS.VisualModelPanel(root);
 
-    var i = 0;
-    var TopNode = new VisModelJS.NodeView();
-    TopNode.Label = (i++).toString() + "#JSON";
-    var SecondNode = new VisModelJS.NodeView();
-    SecondNode.Label = (i++).toString() + "#Array";
-    TopNode.AppendChild(SecondNode);
-    [(i++).toString() + "#KeyValue", (i++).toString() + "#KeyValue"].forEach((name) => {
-        var KVNode = new VisModelJS.NodeView();
-        KVNode.Label = name;
-        SecondNode.AppendChild(KVNode);
-        [(i++).toString() + "#Key", (i++).toString() + "#Value"].forEach((name) => {
-            var Node = new VisModelJS.NodeView();
-            Node.Label = name;
-            Node.Content = "hoge";
-            KVNode.AppendChild(Node);
-        });
-    });
+    var TopNode = createNodeViewFromP4DJson(<P4DNode>sampleData);
 
     panel.InitializeView(TopNode);
     panel.Draw();
