@@ -32,11 +32,8 @@ module VisModelJS {
         private startDrag(initialX: number, initialY: number) {
             this.currentX = initialX;
             this.currentY = initialY;
-            try {
-                if (this.onStartDrag) {
-                    this.onStartDrag(this.viewport);
-                }
-            } catch (e) {
+            if (this.onStartDrag) {
+                this.onStartDrag(this.viewport);
             }
         }
 
@@ -72,12 +69,8 @@ module VisModelJS {
 
         private endDrag() {
             this.mainPointerID = null;
-            this.viewport.SetEventMapLayerPosition(false);
-            try {
-                if (this.onEndDrag) {
-                    this.onEndDrag(this.viewport);
-                }
-            } catch (e) {
+            if (this.onEndDrag) {
+                this.onEndDrag(this.viewport);
             }
         }
 
@@ -130,7 +123,6 @@ module VisModelJS {
                     this.timer = null;
                     var mainPointer: Pointer = this.pointers[Object.keys(this.pointers)[0]];
                     this.mainPointerID = mainPointer.id;
-                    this.viewport.SetEventMapLayerPosition(true);
                     this.startDrag(mainPointer.x, mainPointer.y);
                 } else {
                     var mainPointer = this.getMainPointer();
@@ -223,7 +215,7 @@ module VisModelJS {
                    Scale > this.MaxScale ? this.MaxScale :
                                            Scale;
         }
-
+        
         /**
             @method SetCameraScale
             @param {number} Scale Scale of camera. 1.0 for 100%.
@@ -483,16 +475,6 @@ module VisModelJS {
             this.UpdatePageSize();
             this.SetCameraPageCenter(this.PageWidth * CameraCenterXRate, this.PageHeight * CameraCenterYRate);
             this.UpdateAttr();
-        }
-
-        private IsEventMapUpper: boolean = false;
-        public SetEventMapLayerPosition(IsUpper: boolean) {
-            //if (IsUpper && !this.IsEventMapUpper) {
-            //    $(this.ControlLayer).after(this.EventMapLayer);
-            //} else if (!IsUpper && this.IsEventMapUpper) {
-            //    $(this.ContentLayer).before(this.EventMapLayer);
-            //}
-            //this.IsEventMapUpper = IsUpper;
         }
 
         private static CreateTranformAttr(x: number, y: number, scale: number): string {

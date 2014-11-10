@@ -142,8 +142,9 @@ var createNodeViewFromP4DJson = function () {
     };
 } ();
 
-$(() => {
 
+
+window.onload = function(){
     //Browser detection
     var UA = VisModelJS.Utils.UserAgant;
     if (!UA.isBlink() && !UA.isWebkit() && !UA.isGecko()) {
@@ -166,4 +167,4 @@ $(() => {
         node.SetIsFolded(!node.IsFolded());
         panel.Draw(panel.TopNodeView.Label, 300, node);
     });
-});
+};

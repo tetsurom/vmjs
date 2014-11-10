@@ -23,6 +23,7 @@ module VisModelJS {
         ViewMap: { [index: string]: NodeView };
         TopNodeView: NodeView;
         ActiveFlag: boolean;
+        FocusedFlag: boolean;
 
         OnScreenNodeMap: { [index: string]: NodeView } = {};
         HiddenNodeMap: { [index: string]: NodeView } = {};
@@ -95,25 +96,29 @@ module VisModelJS {
                 this.UpdateHiddenNodeList();
             });
 
+
+            var clickEventIsHandledInViewport = false;
+            var focused = false;
+            document.addEventListener("click", (event: MouseEvent) => {
+                clickEventIsHandledInViewport = false;
+                setTimeout(() => {
+                    if (focused && !clickEventIsHandledInViewport) {
+                        focused = false;
+                    } else if(!focused && clickEventIsHandledInViewport){
+                        focused = true;
+                    }
+                }, 0);
+            }, true);
+
             this.RootElement.addEventListener("click", (event: MouseEvent) => {
                 var Label: string = Utils.getNodeLabelFromEvent(event);
                 if (this.IsActive()) {
                     this.ChangeFocusedLabel(Label);
                 }
+                clickEventIsHandledInViewport = true;
                 event.preventDefault();
                 event.stopPropagation();
             });
-
-            //this.ContentLayer.addEventListener("contextmenu", (event: MouseEvent) => {
-            //    var Label: string = Utils.GetNodeLabelFromEvent(event);
-            //    var NodeView = this.ViewMap[Label];
-            //    if (NodeView != null) {
-            //        this.ChangeFocusedLabel(Label);
-            //    } else {
-            //        this.FocusedLabel = null;
-            //    }
-            //    event.preventDefault();
-            //});
 
             this.ContentLayer.addEventListener("dblclick", (event: MouseEvent) => {
                 var Label: string = Utils.getNodeLabelFromEvent(event);
@@ -129,18 +134,10 @@ module VisModelJS {
                 }
             });
 
-            //this.ContentLayer.addEventListener("mouseover", (event: MouseEvent) => {
-            
-            //});
-
-            //this.ContentLayer.addEventListener("mouseleave", (event: MouseEvent) => {
-            //    /* We use mouseleave event instead of mouseout since mouseout/mouseenter fires
-            //       every time the pointer enters the sub-element of ContentLayer.
-            //       Mouseleave can prevent this annoying event firing. */
-            //});
-
             document.addEventListener("keydown", (Event: KeyboardEvent) => {
-                this.OnKeyDown(Event);
+                if (focused) {
+                    this.OnKeyDown(Event);
+                }
             }, true);
 
             var DragHandler = (e) => {
@@ -208,9 +205,9 @@ module VisModelJS {
                     handled = false;
                     break;
             }
-            if (handled) {
-                Event.stopPropagation();
-            }
+            //if (handled) {
+            //    Event.stopPropagation();
+            //}
         }
 
         OnActivate(): void {
