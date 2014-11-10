@@ -1,59 +1,37 @@
 
 module VisModelJS {
 
-    export class NodeView {
+    export class TreeNodeView {
         IsVisible: boolean;
-        private FoldedFlag: boolean;
+        private _folded: boolean;
         Label: string;
         Content: string;
         RelativeX: number = 0; // relative x from parent node
         RelativeY: number = 0; // relative y from parent node
-        Parent: NodeView;
-        Left: NodeView[] = null;
-        Right: NodeView[] = null;
-        Children: NodeView[] = null;
+        Parent: TreeNodeView;
+        Left: TreeNodeView[] = null;
+        Right: TreeNodeView[] = null;
+        Children: TreeNodeView[] = null;
         Shape: Shape = null;
         ParentDirection: Direction;
         private ShouldReLayoutFlag: boolean = true;
 
         constructor() {
             this.IsVisible = true;
-            this.FoldedFlag = false;
-        }
-        /*
-        constructor(public Model: GSNNode, IsRecursive: boolean) {
-            this.Label = Model.GetLabel();
-            this.NodeDoc = Model.NodeDoc;
-            this.IsVisible = true;
-            this.IsFoldedFlag = false;
-            this.Status   = EditStatus.TreeEditable;
-            if (IsRecursive && Model.SubNodeList != null) {
-                for (var i = 0; i < Model.SubNodeList.length; i++) {
-                    var SubNode = Model.SubNodeList[i];
-                    var SubView = new NodeView(SubNode, IsRecursive);
-                    if (SubNode.NodeType == GSNType.Assumption || SubNode.NodeType == GSNType.Exception) {
-                        // Layout Engine allowed to move a node left-side
-                        this.AppendLeftNode(SubView);
-                    }else if (SubNode.NodeType == GSNType.Context || SubNode.NodeType == GSNType.Justification) {
-                        // Layout Engine allowed to move a node left-side
-                        this.AppendRightNode(SubView);
-                    } else {
-                        this.AppendChild(SubView);
-                    }
-                }
-            }
-        }
-        */
-        IsFolded(): boolean {
-            return this.FoldedFlag;
+            this._folded = false;
         }
 
-        SetIsFolded(Flag: boolean): void {
-            if (this.FoldedFlag != Flag) {
+        get folded(): boolean {
+            return this._folded;
+        }
+
+        set folded(value) {
+            if (this._folded != value) {
                 this.SetShouldReLayout(true);
             }
-            this.FoldedFlag = Flag;
+            this._folded = value;
         }
+
 
         SetShouldReLayout(Flag: boolean): void {
             if (!this.ShouldReLayoutFlag && Flag && this.Parent) {
@@ -66,7 +44,7 @@ module VisModelJS {
             return this.ShouldReLayoutFlag;
         }
 
-        UpdateViewMap(ViewMap: { [index: string]: NodeView }): void {
+        UpdateViewMap(ViewMap: { [index: string]: TreeNodeView }): void {
             ViewMap[this.Label] = this;
             if (this.Left != null) {
                 for (var i = 0; i < this.Left.length; i++) {
@@ -85,7 +63,7 @@ module VisModelJS {
             }
         }
 
-        AppendChild(SubNode: NodeView): void {
+        AppendChild(SubNode: TreeNodeView): void {
             if (this.Children == null) {
                 this.Children = [];
             }
@@ -93,7 +71,7 @@ module VisModelJS {
             SubNode.Parent = this;
         }
 
-        AppendLeftNode(SubNode: NodeView): void {
+        AppendLeftNode(SubNode: TreeNodeView): void {
             if (this.Left == null) {
                 this.Left = [];
             }
@@ -101,7 +79,7 @@ module VisModelJS {
             SubNode.Parent = this;
         }
 
-        AppendRightNode(SubNode: NodeView): void {
+        AppendRightNode(SubNode: TreeNodeView): void {
             if (this.Right == null) {
                 this.Right = [];
             }
@@ -131,8 +109,8 @@ module VisModelJS {
             @return always 0 if this is top goal.
         */
         GetGX(): number {
-            if (NodeView.GlobalPositionCache != null && NodeView.GlobalPositionCache[this.Label]) {
-                return NodeView.GlobalPositionCache[this.Label].x;
+            if (TreeNodeView.GlobalPositionCache != null && TreeNodeView.GlobalPositionCache[this.Label]) {
+                return TreeNodeView.GlobalPositionCache[this.Label].x;
             }
             if (this.Parent == null) {
                 return this.RelativeX;
@@ -145,8 +123,8 @@ module VisModelJS {
             @eturn always 0 if this is top goal.
         */
         GetGY(): number {
-            if (NodeView.GlobalPositionCache != null && NodeView.GlobalPositionCache[this.Label]) {
-                return NodeView.GlobalPositionCache[this.Label].y;
+            if (TreeNodeView.GlobalPositionCache != null && TreeNodeView.GlobalPositionCache[this.Label]) {
+                return TreeNodeView.GlobalPositionCache[this.Label].y;
             }
             if (this.Parent == null) {
                 return this.RelativeY;
@@ -166,10 +144,10 @@ module VisModelJS {
         // For memorization
         private static GlobalPositionCache: { [index: string]: Point } = null;
         public static SetGlobalPositionCacheEnabled(State: boolean) {
-            if (State && NodeView.GlobalPositionCache == null) {
-                NodeView.GlobalPositionCache = {};
+            if (State && TreeNodeView.GlobalPositionCache == null) {
+                TreeNodeView.GlobalPositionCache = {};
             } else if (!State) {
-                NodeView.GlobalPositionCache = null;
+                TreeNodeView.GlobalPositionCache = null;
             }
         }
 
@@ -178,8 +156,8 @@ module VisModelJS {
             @return always (0, 0) if this is top goal.
         */
         private GetGlobalPosition(): Point {
-            if (NodeView.GlobalPositionCache != null && NodeView.GlobalPositionCache[this.Label]) {
-                return NodeView.GlobalPositionCache[this.Label].clone();
+            if (TreeNodeView.GlobalPositionCache != null && TreeNodeView.GlobalPositionCache[this.Label]) {
+                return TreeNodeView.GlobalPositionCache[this.Label].clone();
             }
             if (this.Parent == null) {
                 return new Point(this.RelativeX, this.RelativeY);
@@ -187,8 +165,8 @@ module VisModelJS {
             var ParentPosition = this.Parent.GetGlobalPosition();
             ParentPosition.x += this.RelativeX;
             ParentPosition.y += this.RelativeY;
-            if (NodeView.GlobalPositionCache != null) {
-                NodeView.GlobalPositionCache[this.Label] = ParentPosition.clone();
+            if (TreeNodeView.GlobalPositionCache != null) {
+                TreeNodeView.GlobalPositionCache[this.Label] = ParentPosition.clone();
             }
             return ParentPosition;
         }
@@ -203,9 +181,9 @@ module VisModelJS {
         /**
             Try to reuse shape.
         */
-        SaveFlags(OldView: NodeView): void {
+        SaveFlags(OldView: TreeNodeView): void {
             if (OldView) {
-                this.FoldedFlag = OldView.FoldedFlag;
+                this._folded = OldView._folded;
                 
                 var IsContentChanged = this.Content != OldView.Content;
                 var IsTypeChanged = false;//this.GetNodeType() != OldView.GetNodeType();
@@ -228,12 +206,12 @@ module VisModelJS {
         /**
             Update DOM node position by the position that layout engine caluculated
         */
-        UpdateNodePosition(AnimationCallbacks?: Function[], Duration?: number, ScreenRect?: Rect, UnfoldBaseNode?: NodeView): void {
+        UpdateNodePosition(AnimationCallbacks?: Function[], Duration?: number, ScreenRect?: Rect, UnfoldBaseNode?: TreeNodeView): void {
             Duration = Duration || 0;
             if (!this.IsVisible) {
                 return
             }
-            var UpdateSubNode = (SubNode: NodeView) => {
+            var UpdateSubNode = (SubNode: TreeNodeView) => {
                 var Base = UnfoldBaseNode;
                 if (!Base && SubNode.Shape.WillFadein()) {
                     Base = this;
@@ -254,7 +232,7 @@ module VisModelJS {
             for (var i = 0; i < 3; ++i) {
                 var P1 = this.GetConnectorPosition(ArrowDirections[i], GlobalPosition);
                 var ArrowToDirection = ReverseDirection(ArrowDirections[i]);
-                this.ForEachVisibleSubNode(SubNodeTypes[i], (SubNode: NodeView) => {
+                this.ForEachVisibleSubNode(SubNodeTypes[i], (SubNode: TreeNodeView) => {
                     var P2 = SubNode.GetConnectorPosition(ArrowToDirection, SubNode.GetGlobalPosition());
                     UpdateSubNode(SubNode);
                     SubNode.Shape.MoveArrowTo(AnimationCallbacks, P1, P2, ArrowDirections[i], Duration, ScreenRect);
@@ -263,8 +241,8 @@ module VisModelJS {
             }
         }
 
-        private ForEachVisibleSubNode(SubNodes: NodeView[], Action: (NodeView) => any): boolean {
-            if (SubNodes != null && !this.FoldedFlag) {
+        private ForEachVisibleSubNode(SubNodes: TreeNodeView[], Action: (NodeView) => any): boolean {
+            if (SubNodes != null && !this._folded) {
                 for (var i = 0; i < SubNodes.length; i++) {
                     if (SubNodes[i].IsVisible) {
                         if (Action(SubNodes[i]) === false) {
@@ -276,31 +254,31 @@ module VisModelJS {
             return true;
         }
 
-        ForEachVisibleChildren(Action: (SubNode: NodeView) => any): void {
+        ForEachVisibleChildren(Action: (SubNode: TreeNodeView) => any): void {
             this.ForEachVisibleSubNode(this.Children, Action);
         }
 
-        ForEachVisibleRightNodes(Action: (SubNode: NodeView) => any): void {
+        ForEachVisibleRightNodes(Action: (SubNode: TreeNodeView) => any): void {
             this.ForEachVisibleSubNode(this.Right, Action);
         }
 
-        ForEachVisibleLeftNodes(Action: (SubNode: NodeView) => any): void {
+        ForEachVisibleLeftNodes(Action: (SubNode: TreeNodeView) => any): void {
             this.ForEachVisibleSubNode(this.Left, Action);
         }
 
-        ForEachVisibleAllSubNodes(Action: (SubNode: NodeView) => any): boolean {
+        ForEachVisibleAllSubNodes(Action: (SubNode: TreeNodeView) => any): boolean {
             if (this.ForEachVisibleSubNode(this.Left, Action) &&
                 this.ForEachVisibleSubNode(this.Right, Action) &&
                 this.ForEachVisibleSubNode(this.Children, Action)) return true;
             return false;
         }
 
-        TraverseVisibleNode(Action: (SubNode: NodeView) => any): void {
+        TraverseVisibleNode(Action: (SubNode: TreeNodeView) => any): void {
             Action(this);
-            this.ForEachVisibleAllSubNodes((SubNode: NodeView) => { SubNode.TraverseVisibleNode(Action); });
+            this.ForEachVisibleAllSubNodes((SubNode: TreeNodeView) => { SubNode.TraverseVisibleNode(Action); });
         }
 
-        private ForEachSubNode(SubNodes: NodeView[], Action: (NodeView) => any): boolean {
+        private ForEachSubNode(SubNodes: TreeNodeView[], Action: (NodeView) => any): boolean {
             if (SubNodes != null) {
                 for (var i = 0; i < SubNodes.length; i++) {
                     if (Action(SubNodes[i]) === false) {
@@ -311,16 +289,16 @@ module VisModelJS {
             return true;
         }
 
-        ForEachAllSubNodes(Action: (SubNode: NodeView) => any): boolean {
+        ForEachAllSubNodes(Action: (SubNode: TreeNodeView) => any): boolean {
             if (this.ForEachSubNode(this.Left, Action) &&
                 this.ForEachSubNode(this.Right, Action) &&
                 this.ForEachSubNode(this.Children, Action)) return true;
             return false;
         }
 
-        TraverseNode(Action: (SubNode: NodeView) => any): boolean {
+        TraverseNode(Action: (SubNode: TreeNodeView) => any): boolean {
             if (Action(this) === false) return false;
-            if (this.ForEachAllSubNodes((SubNode: NodeView) => { return SubNode.TraverseNode(Action); })) return true;
+            if (this.ForEachAllSubNodes((SubNode: TreeNodeView) => { return SubNode.TraverseNode(Action); })) return true;
             return false;
         }
 
@@ -332,13 +310,13 @@ module VisModelJS {
             if (Force || !this.IsVisible) {
                 this.GetShape().ClearAnimationCache();
             }
-            if (Force || this.FoldedFlag) {
-                this.ForEachAllSubNodes((SubNode: NodeView) => {
+            if (Force || this._folded) {
+                this.ForEachAllSubNodes((SubNode: TreeNodeView) => {
                     SubNode.ClearAnimationCache(true);
                 });
             }
             else {
-                this.ForEachAllSubNodes((SubNode: NodeView) => {
+                this.ForEachAllSubNodes((SubNode: TreeNodeView) => {
                     SubNode.ClearAnimationCache(false);
                 });
             }
@@ -412,7 +390,7 @@ module VisModelJS {
         */
         FoldDeepSubGoals(limitDepth: number): void {
             if (limitDepth <= 0) {
-                this.SetIsFolded(true);
+                this.folded = true;
             } else {
                 this.ForEachVisibleChildren(SubNode => SubNode.FoldDeepSubGoals(limitDepth - 1));
             }

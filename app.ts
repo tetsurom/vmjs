@@ -38,7 +38,7 @@ class PegNodeShape extends VisModelJS.Shape {
         super.PrepareSVGContent();
         this.BodyRect = VisModelJS.Utils.createSVGElement("rect");
         this.ShapeGroup.appendChild(this.BodyRect);
-        if (this.NodeView.IsFolded()) {
+        if (this.NodeView.folded) {
             this.ShapeGroup.appendChild(PegNodeShape.ModuleSymbolMaster.cloneNode());
         }
     }
@@ -46,7 +46,7 @@ class PegNodeShape extends VisModelJS.Shape {
     FitSizeToContent(): void {
         this.BodyRect.setAttribute("width", this.GetNodeWidth().toString());
         this.BodyRect.setAttribute("height", this.GetNodeHeight().toString());
-        if (this.NodeView.Children == null && !this.NodeView.IsFolded()) {
+        if (this.NodeView.Children == null && !this.NodeView.folded) {
             var x = (this.GetNodeWidth() / 2).toString();
             var y = (this.GetNodeHeight() + 20).toString();
         }
@@ -58,7 +58,7 @@ class PegNodeShape extends VisModelJS.Shape {
 }
 
 class PegShapeFactory extends VisModelJS.ShapeFactory {
-    CreateShape(Node: VisModelJS.NodeView): VisModelJS.Shape {
+    CreateShape(Node: VisModelJS.TreeNodeView): VisModelJS.Shape {
         return new PegNodeShape(Node);
     }
 }
@@ -127,7 +127,7 @@ interface P4DNode {
 var createNodeViewFromP4DJson = function () {
     var i = 0;
     return function (json: P4DNode) {
-        var node = new VisModelJS.NodeView();
+        var node = new VisModelJS.TreeNodeView();
         node.Label = (i++).toString() + "#" + json.tag;
         if (json.value) {
             if ((<any>json.value.constructor).name == "Array") {
@@ -164,7 +164,7 @@ window.onload = function(){
     panel.Viewport.SetCamera(TopNode.GetCenterGX(), TopNode.GetCenterGY() + panel.Viewport.GetPageHeight() / 3, 1);
     panel.addEventListener("dblclick", event => {
         var node = (<VisModelJS.NodeViewEvent>event).node;
-        node.SetIsFolded(!node.IsFolded());
+        node.folded = !node.folded;
         panel.Draw(panel.TopNodeView.Label, 300, node);
     });
 };

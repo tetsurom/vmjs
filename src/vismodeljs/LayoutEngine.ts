@@ -1,40 +1,36 @@
 
 module VisModelJS {
     export class LayoutEngine {
-        DoLayout(PictgramPanel: VisualModelPanel, NodeView: NodeView): void {
+        DoLayout(PictgramPanel: VisualModelPanel, NodeView: TreeNodeView): void {
         }
     }
 
     
-    export class SimpleLayoutEngine extends LayoutEngine {
-        static ContextHorizontalMargin = 32;
-        static ContextVerticalMargin = 10;
+    export class VerticalTreeLayoutEngine extends LayoutEngine {
+        static SideNodeHorizontalMargin = 32;
+        static SideNodeVerticalMargin = 10;
         static ChildrenVerticalMargin = 64;
         static ChildrenHorizontalMargin = 12;
 
-        private Render(ThisNode: NodeView, DivFrag: DocumentFragment, SvgNodeFrag: DocumentFragment, SvgConnectionFrag: DocumentFragment): void {
+        private Render(ThisNode: TreeNodeView, DivFrag: DocumentFragment, SvgNodeFrag: DocumentFragment, SvgConnectionFrag: DocumentFragment): void {
             if (ThisNode.IsVisible) {
                 ThisNode.GetShape().PrepareContent();
                 ThisNode.Render(DivFrag, SvgNodeFrag, SvgConnectionFrag);
-                if (!ThisNode.IsFolded()) {
-                    ThisNode.ForEachVisibleAllSubNodes((SubNode: NodeView) => {
+                if (!ThisNode.folded) {
+                    ThisNode.ForEachVisibleAllSubNodes((SubNode: TreeNodeView) => {
                         this.Render(SubNode, DivFrag, SvgNodeFrag, SvgConnectionFrag);
                     });
                 }
             }
         }
 
-        DoLayout(PictgramPanel: VisualModelPanel, NodeView: NodeView): void {
-
+        DoLayout(PictgramPanel: VisualModelPanel, NodeView: TreeNodeView): void {
             var DivFragment = document.createDocumentFragment();
             var SvgNodeFragment = document.createDocumentFragment();
             var SvgConnectionFragment = document.createDocumentFragment();
             var Dummy = document.createDocumentFragment();
 
-            //var t0 = AssureNoteUtils.GetTime();
             this.Render(NodeView, DivFragment, SvgNodeFragment, SvgConnectionFragment);
-            //var t1 = AssureNoteUtils.GetTime();
-            //console.log("Render: " + (t1 - t0));
 
             PictgramPanel.ContentLayer.appendChild(DivFragment);
             PictgramPanel.SVGLayerConnectorGroup.appendChild(SvgConnectionFragment);
@@ -43,42 +39,38 @@ module VisModelJS {
             Dummy.appendChild(DivFragment);
             Dummy.appendChild(SvgConnectionFragment);
             Dummy.appendChild(SvgNodeFragment);
-            //var t2 = AssureNoteUtils.GetTime();
-            //console.log("NodeSize: " + (t2 - t1));
 
             this.Layout(NodeView);
             PictgramPanel.ContentLayer.appendChild(DivFragment);
             PictgramPanel.SVGLayer.appendChild(SvgConnectionFragment);
             PictgramPanel.SVGLayer.appendChild(SvgNodeFragment);
-            //var t3 = AssureNoteUtils.GetTime();
-            //console.log("Layout: " + (t3 - t2));
         }
 
-        private PrepareNodeSize(ThisNode: NodeView): void {
+        private PrepareNodeSize(ThisNode: TreeNodeView): void {
             var Shape = ThisNode.GetShape();
             Shape.GetNodeWidth();
             Shape.GetNodeHeight();
-            if (ThisNode.IsFolded()) {
+            if (ThisNode.folded) {
                 return;
             }
-            ThisNode.ForEachVisibleLeftNodes((SubNode: NodeView) => {
+            ThisNode.ForEachVisibleLeftNodes((SubNode: TreeNodeView) => {
                 this.PrepareNodeSize(SubNode);
             });
-            ThisNode.ForEachVisibleRightNodes((SubNode: NodeView) => {
+            ThisNode.ForEachVisibleRightNodes((SubNode: TreeNodeView) => {
                 this.PrepareNodeSize(SubNode);
             });
-            ThisNode.ForEachVisibleChildren((SubNode: NodeView) => {
+            ThisNode.ForEachVisibleChildren((SubNode: TreeNodeView) => {
                 this.PrepareNodeSize(SubNode);
             });
         }
 
-        private Layout(ThisNode: NodeView): void {
+        private Layout(ThisNode: TreeNodeView): void {
             if (!ThisNode.IsVisible) {
                 return;
             }
             var Shape = ThisNode.GetShape();
             if (!ThisNode.ShouldReLayout()) {
-                ThisNode.TraverseVisibleNode((Node: NodeView) => {
+                ThisNode.TraverseVisibleNode((Node: TreeNodeView) => {
                     Node.Shape.FitSizeToContent();
                 });
                 return;
@@ -89,52 +81,52 @@ module VisModelJS {
             var ThisNodeWidth = Shape.GetNodeWidth();
             var TreeRightX = ThisNodeWidth;
             var TreeHeight = Shape.GetNodeHeight();
-            if (ThisNode.IsFolded()) {
+            if (ThisNode.folded) {
                 Shape.SetHeadRect(0, 0, ThisNodeWidth, TreeHeight);
                 Shape.SetTreeRect(0, 0, ThisNodeWidth, TreeHeight);
                 return;
             }
             if (ThisNode.Left != null) {
                 var LeftNodesWidth = 0;
-                var LeftNodesHeight = -SimpleLayoutEngine.ContextVerticalMargin;
-                ThisNode.ForEachVisibleLeftNodes((SubNode: NodeView) => {
+                var LeftNodesHeight = -VerticalTreeLayoutEngine.SideNodeVerticalMargin;
+                ThisNode.ForEachVisibleLeftNodes((SubNode: TreeNodeView) => {
                     SubNode.GetShape().FitSizeToContent();
-                    LeftNodesHeight += SimpleLayoutEngine.ContextVerticalMargin;
-                    SubNode.RelativeX = -(SubNode.Shape.GetNodeWidth() + SimpleLayoutEngine.ContextHorizontalMargin);
+                    LeftNodesHeight += VerticalTreeLayoutEngine.SideNodeVerticalMargin;
+                    SubNode.RelativeX = -(SubNode.Shape.GetNodeWidth() + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
                     SubNode.RelativeY = LeftNodesHeight;
                     LeftNodesWidth = Math.max(LeftNodesWidth, SubNode.Shape.GetNodeWidth());
                     LeftNodesHeight += SubNode.Shape.GetNodeHeight();
                 });
                 var LeftShift = (ThisNode.Shape.GetNodeHeight() - LeftNodesHeight) / 2;
                 if (LeftShift > 0) {
-                    ThisNode.ForEachVisibleLeftNodes((SubNode: NodeView) => {
+                    ThisNode.ForEachVisibleLeftNodes((SubNode: TreeNodeView) => {
                         SubNode.RelativeY += LeftShift;
                     });
                 }
                 if (LeftNodesHeight > 0) {
-                    TreeLeftX = -(LeftNodesWidth + SimpleLayoutEngine.ContextHorizontalMargin);
+                    TreeLeftX = -(LeftNodesWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
                     TreeHeight = Math.max(TreeHeight, LeftNodesHeight);
                 }
             }
             if (ThisNode.Right != null) {
                 var RightNodesWidth = 0;
-                var RightNodesHeight = -SimpleLayoutEngine.ContextVerticalMargin;
-                ThisNode.ForEachVisibleRightNodes((SubNode: NodeView) => {
+                var RightNodesHeight = -VerticalTreeLayoutEngine.SideNodeVerticalMargin;
+                ThisNode.ForEachVisibleRightNodes((SubNode: TreeNodeView) => {
                     SubNode.GetShape().FitSizeToContent();
-                    RightNodesHeight += SimpleLayoutEngine.ContextVerticalMargin;
-                    SubNode.RelativeX = (ThisNodeWidth + SimpleLayoutEngine.ContextHorizontalMargin);
+                    RightNodesHeight += VerticalTreeLayoutEngine.SideNodeVerticalMargin;
+                    SubNode.RelativeX = (ThisNodeWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
                     SubNode.RelativeY = RightNodesHeight;
                     RightNodesWidth = Math.max(RightNodesWidth, SubNode.Shape.GetNodeWidth());
                     RightNodesHeight += SubNode.Shape.GetNodeHeight();
                 });
                 var RightShift = (ThisNode.Shape.GetNodeHeight() - RightNodesHeight) / 2;
                 if (RightShift > 0) {
-                    ThisNode.ForEachVisibleRightNodes((SubNode: NodeView) => {
+                    ThisNode.ForEachVisibleRightNodes((SubNode: TreeNodeView) => {
                         SubNode.RelativeY += RightShift;
                     });
                 }
                 if (RightNodesHeight > 0) {
-                    TreeRightX += RightNodesWidth + SimpleLayoutEngine.ContextHorizontalMargin;
+                    TreeRightX += RightNodesWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin;
                     TreeHeight = Math.max(TreeHeight, RightNodesHeight);
                 }
             }
@@ -142,30 +134,30 @@ module VisModelJS {
             var HeadRightX = TreeRightX;
             var HeadWidth = TreeRightX - TreeLeftX;
             Shape.SetHeadRect(TreeLeftX, 0, HeadWidth, TreeHeight);
-            TreeHeight += SimpleLayoutEngine.ChildrenVerticalMargin;
+            TreeHeight += VerticalTreeLayoutEngine.ChildrenVerticalMargin;
 
             var ChildrenTopWidth = 0;
             var ChildrenBottomWidth = 0;
             var ChildrenHeight = 0;
             var FormarUnfoldedChildHeight = Infinity;
-            var FoldedNodeRun: NodeView[] = [];
+            var FoldedNodeRun: TreeNodeView[] = [];
             var VisibleChildrenCount = 0;
             if (ThisNode.Children != null && ThisNode.Children.length > 0) {
                 var IsPreviousChildFolded = false;
 
-                ThisNode.ForEachVisibleChildren((SubNode: NodeView) => {
+                ThisNode.ForEachVisibleChildren((SubNode: TreeNodeView) => {
                     VisibleChildrenCount++;
                     this.Layout(SubNode);
                     var ChildTreeWidth = SubNode.Shape.GetTreeWidth();
-                    var ChildHeadWidth = SubNode.IsFolded() ? SubNode.Shape.GetNodeWidth() : SubNode.Shape.GetHeadWidth();
-                    var ChildHeadHeight = SubNode.IsFolded() ? SubNode.Shape.GetNodeHeight() : SubNode.Shape.GetHeadHeight();
+                    var ChildHeadWidth = SubNode.folded ? SubNode.Shape.GetNodeWidth() : SubNode.Shape.GetHeadWidth();
+                    var ChildHeadHeight = SubNode.folded ? SubNode.Shape.GetNodeHeight() : SubNode.Shape.GetHeadHeight();
                     var ChildHeadLeftSideMargin = SubNode.Shape.GetHeadLeftLocalX() - SubNode.Shape.GetTreeLeftLocalX();
                     var ChildHeadRightX = ChildHeadLeftSideMargin + ChildHeadWidth;
                     var ChildTreeHeight = SubNode.Shape.GetTreeHeight();
-                    var HMargin = SimpleLayoutEngine.ChildrenHorizontalMargin;
+                    var HMargin = VerticalTreeLayoutEngine.ChildrenHorizontalMargin;
 
                     var IsUndeveloped = SubNode.Children == null || SubNode.Children.length == 0;
-                    var IsFoldedLike = (SubNode.IsFolded() || IsUndeveloped) && ChildHeadHeight <= FormarUnfoldedChildHeight;
+                    var IsFoldedLike = (SubNode.folded || IsUndeveloped) && ChildHeadHeight <= FormarUnfoldedChildHeight;
 
                     if (IsFoldedLike) {
                         SubNode.RelativeX = ChildrenTopWidth;
@@ -211,17 +203,17 @@ module VisModelJS {
                     //console.log("T" + ChildrenTopWidth + ", B" + ChildrenBottomWidth);
                 });
 
-                var ChildrenWidth = Math.max(ChildrenTopWidth, ChildrenBottomWidth) - SimpleLayoutEngine.ChildrenHorizontalMargin;
+                var ChildrenWidth = Math.max(ChildrenTopWidth, ChildrenBottomWidth) - VerticalTreeLayoutEngine.ChildrenHorizontalMargin;
                 var ShiftX = (ChildrenWidth - ThisNodeWidth) / 2;
                 
                 if (VisibleChildrenCount == 1) {
-                    ThisNode.ForEachVisibleChildren((SubNode: NodeView) => {
+                    ThisNode.ForEachVisibleChildren((SubNode: TreeNodeView) => {
                         ShiftX = -SubNode.Shape.GetTreeLeftLocalX();
-                        if (!SubNode.HasSideNode() || SubNode.IsFolded()) {
+                        if (!SubNode.HasSideNode() || SubNode.folded) {
                             var ShiftY = 0;
                             var SubNodeHeight = SubNode.Shape.GetNodeHeight();
                             var ThisHeight = ThisNode.Shape.GetNodeHeight();
-                            var VMargin = SimpleLayoutEngine.ChildrenVerticalMargin;
+                            var VMargin = VerticalTreeLayoutEngine.ChildrenVerticalMargin;
                             if (!SubNode.HasChildren() || ThisHeight + VMargin * 2 + SubNodeHeight > TreeHeight) {
                                 ShiftY = TreeHeight - (ThisHeight + VMargin);
                             } else {
@@ -233,7 +225,7 @@ module VisModelJS {
                     });
                 }
                 TreeLeftX = Math.min(TreeLeftX, -ShiftX);
-                ThisNode.ForEachVisibleChildren((SubNode: NodeView) => {
+                ThisNode.ForEachVisibleChildren((SubNode: TreeNodeView) => {
                     SubNode.RelativeX -= ShiftX;
                 });
 

@@ -83,11 +83,11 @@ module VisModelJS {
             ShapeFactory.Factory = Factory;
         }
 
-        static CreateShape(Node: NodeView): Shape {
+        static CreateShape(Node: TreeNodeView): Shape {
             return ShapeFactory.Factory.CreateShape(Node);
         }
 
-        CreateShape(Node: NodeView): Shape {
+        CreateShape(Node: TreeNodeView): Shape {
             throw Error("Not impremented");
             return null;
         }
@@ -118,7 +118,7 @@ module VisModelJS {
         })();
 
 
-        constructor(public NodeView: NodeView) {
+        constructor(public NodeView: TreeNodeView) {
             this.Content = null;
             this.NodeWidthCache = Shape.DefaultWidth;
             this.NodeHeightCache = 0;
