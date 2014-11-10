@@ -17,17 +17,17 @@ class PegNodeShape extends VisModelJS.Shape {
             var div = document.createElement("div");
             this.Content = div;
 
-            div.id = this.NodeView.Label;
-            div.setAttribute("data-nodelabel", this.NodeView.Label);
+            div.id = this.NodeView.label;
+            div.setAttribute("data-nodelabel", this.NodeView.label);
 
-            if (this.NodeView.Label) {
+            if (this.NodeView.label) {
                 var h4 = document.createElement("h4");
-                h4.textContent = "#" + this.NodeView.Label.split("#")[1];
+                h4.textContent = "#" + this.NodeView.label.split("#")[1];
                 div.appendChild(h4);
             }
-            if (this.NodeView.Content) {
+            if (this.NodeView.content) {
                 var p = document.createElement("p");
-                p.innerText = this.NodeView.Content.trim();
+                p.innerText = this.NodeView.content.trim();
                 div.appendChild(p);
             }
             this.UpdateHtmlClass();
@@ -46,7 +46,7 @@ class PegNodeShape extends VisModelJS.Shape {
     FitSizeToContent(): void {
         this.BodyRect.setAttribute("width", this.GetNodeWidth().toString());
         this.BodyRect.setAttribute("height", this.GetNodeHeight().toString());
-        if (this.NodeView.Children == null && !this.NodeView.folded) {
+        if (this.NodeView.childNodes == null && !this.NodeView.folded) {
             var x = (this.GetNodeWidth() / 2).toString();
             var y = (this.GetNodeHeight() + 20).toString();
         }
@@ -128,14 +128,14 @@ var createNodeViewFromP4DJson = function () {
     var i = 0;
     return function (json: P4DNode) {
         var node = new VisModelJS.TreeNodeView();
-        node.Label = (i++).toString() + "#" + json.tag;
+        node.label = (i++).toString() + "#" + json.tag;
         if (json.value) {
             if ((<any>json.value.constructor).name == "Array") {
                 (<P4DNode[]>json.value).forEach(json => {
-                    node.AppendChild(createNodeViewFromP4DJson(json));
+                    node.appendChild(createNodeViewFromP4DJson(json));
                 });
             } else {
-                node.Content = json.value.toString();
+                node.content = json.value.toString();
             }
         }
         return node;
@@ -165,6 +165,6 @@ window.onload = function(){
     panel.addEventListener("dblclick", event => {
         var node = (<VisModelJS.NodeViewEvent>event).node;
         node.folded = !node.folded;
-        panel.Draw(panel.TopNodeView.Label, 300, node);
+        panel.Draw(panel.TopNodeView.label, 300, node);
     });
 };

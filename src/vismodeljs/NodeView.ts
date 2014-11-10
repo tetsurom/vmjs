@@ -2,152 +2,150 @@
 module VisModelJS {
 
     export class TreeNodeView {
-        IsVisible: boolean;
+        visible: boolean;
         private _folded: boolean;
-        Label: string;
-        Content: string;
-        RelativeX: number = 0; // relative x from parent node
-        RelativeY: number = 0; // relative y from parent node
-        Parent: TreeNodeView;
-        Left: TreeNodeView[] = null;
-        Right: TreeNodeView[] = null;
-        Children: TreeNodeView[] = null;
-        Shape: Shape = null;
-        ParentDirection: Direction;
-        private ShouldReLayoutFlag: boolean = true;
+        label: string;
+        content: string;
+        relativeX: number = 0; // relative x from parent node
+        relativeY: number = 0; // relative y from parent node
+        parent: TreeNodeView;
+        leftNodes: TreeNodeView[] = null;
+        rightNodes: TreeNodeView[] = null;
+        childNodes: TreeNodeView[] = null;
+        private _shape: Shape = null;
+        parentDirection: Direction;
+        private _shouldReLayout: boolean = true;
 
         constructor() {
-            this.IsVisible = true;
+            this.visible = true;
             this._folded = false;
         }
 
         get folded(): boolean {
             return this._folded;
         }
-
         set folded(value) {
             if (this._folded != value) {
-                this.SetShouldReLayout(true);
+                this.shouldReLayout = true;
             }
             this._folded = value;
         }
 
-
-        SetShouldReLayout(Flag: boolean): void {
-            if (!this.ShouldReLayoutFlag && Flag && this.Parent) {
-                this.Parent.SetShouldReLayout(true);
+        get shouldReLayout(): boolean {
+            return this._shouldReLayout;
+        }
+        set shouldReLayout(value: boolean) {
+            if (!this._shouldReLayout && value && this.parent) {
+                this.parent.shouldReLayout = true;
             }
-            this.ShouldReLayoutFlag = Flag;
+            this._shouldReLayout = value;
         }
 
-        ShouldReLayout(): boolean {
-            return this.ShouldReLayoutFlag;
-        }
-
-        UpdateViewMap(ViewMap: { [index: string]: TreeNodeView }): void {
-            ViewMap[this.Label] = this;
-            if (this.Left != null) {
-                for (var i = 0; i < this.Left.length; i++) {
-                    this.Left[i].UpdateViewMap(ViewMap);
+        //FixMe
+        UpdateViewMap(viewMap: { [index: string]: TreeNodeView }): void {
+            viewMap[this.label] = this;
+            if (this.leftNodes != null) {
+                for (var i = 0; i < this.leftNodes.length; i++) {
+                    this.leftNodes[i].UpdateViewMap(viewMap);
                 }
             }
-            if (this.Right != null) {
-                for (var i = 0; i < this.Right.length; i++) {
-                    this.Right[i].UpdateViewMap(ViewMap);
+            if (this.rightNodes != null) {
+                for (var i = 0; i < this.rightNodes.length; i++) {
+                    this.rightNodes[i].UpdateViewMap(viewMap);
                 }
             }
-            if (this.Children != null) {
-                for (var i = 0; i < this.Children.length; i++) {
-                    this.Children[i].UpdateViewMap(ViewMap);
+            if (this.childNodes != null) {
+                for (var i = 0; i < this.childNodes.length; i++) {
+                    this.childNodes[i].UpdateViewMap(viewMap);
                 }
             }
         }
 
-        AppendChild(SubNode: TreeNodeView): void {
-            if (this.Children == null) {
-                this.Children = [];
+        appendChild(node: TreeNodeView): void {
+            if (this.childNodes == null) {
+                this.childNodes = [];
             }
-            this.Children.push(SubNode);
-            SubNode.Parent = this;
+            this.childNodes.push(node);
+            node.parent = this;
         }
 
-        AppendLeftNode(SubNode: TreeNodeView): void {
-            if (this.Left == null) {
-                this.Left = [];
+        appendLeftNode(node: TreeNodeView): void {
+            if (this.leftNodes == null) {
+                this.leftNodes = [];
             }
-            this.Left.push(SubNode);
-            SubNode.Parent = this;
+            this.leftNodes.push(node);
+            node.parent = this;
         }
 
-        AppendRightNode(SubNode: TreeNodeView): void {
-            if (this.Right == null) {
-                this.Right = [];
+        appendRightNode(node: TreeNodeView): void {
+            if (this.rightNodes == null) {
+                this.rightNodes = [];
             }
-            this.Right.push(SubNode);
-            SubNode.Parent = this;
+            this.rightNodes.push(node);
+            node.parent = this;
         }
 
-        GetShape(): Shape {
-            if (this.Shape == null) {
-                this.Shape = ShapeFactory.CreateShape(this);
+        get shape(): Shape {
+            if (this._shape == null) {
+                this._shape = ShapeFactory.CreateShape(this);
             }
-            return this.Shape;
+            return this._shape;
         }
 
-        SetShape(Shape: Shape) {
-            if (this.Shape) {
-                this.Shape.NodeView = null;
+        set shape(value: Shape) {
+            if (this._shape) {
+                this._shape.NodeView = null;
             }
-            if (Shape) {
-                Shape.NodeView = this;
+            if (value) {
+                value.NodeView = this;
             }
-            this.Shape = Shape;
+            this._shape = value;
         }
 
         /**
             Global X: Scale-independent and transform-independent X distance from leftside of the top goal.
             @return always 0 if this is top goal.
         */
-        GetGX(): number {
-            if (TreeNodeView.GlobalPositionCache != null && TreeNodeView.GlobalPositionCache[this.Label]) {
-                return TreeNodeView.GlobalPositionCache[this.Label].x;
+        get gx(): number {
+            if (TreeNodeView.globalPositionCache != null && TreeNodeView.globalPositionCache[this.label]) {
+                return TreeNodeView.globalPositionCache[this.label].x;
             }
-            if (this.Parent == null) {
-                return this.RelativeX;
+            if (this.parent == null) {
+                return this.relativeX;
             }
-            return this.Parent.GetGX() + this.RelativeX;
+            return this.parent.gx + this.relativeX;
         }
 
         /**
             Global Y: Scale-independent and transform-independent Y distance from top of the top goal.
             @eturn always 0 if this is top goal.
         */
-        GetGY(): number {
-            if (TreeNodeView.GlobalPositionCache != null && TreeNodeView.GlobalPositionCache[this.Label]) {
-                return TreeNodeView.GlobalPositionCache[this.Label].y;
+        get gy(): number {
+            if (TreeNodeView.globalPositionCache != null && TreeNodeView.globalPositionCache[this.label]) {
+                return TreeNodeView.globalPositionCache[this.label].y;
             }
-            if (this.Parent == null) {
-                return this.RelativeY;
+            if (this.parent == null) {
+                return this.relativeY;
             }
-            return this.Parent.GetGY() + this.RelativeY;
+            return this.parent.gy + this.relativeY;
         }
 
         // Global center X/Y: Node center position
-        GetCenterGX(): number {
-            return this.GetGX() + this.Shape.GetNodeWidth() * 0.5;
+        get centerGx(): number {
+            return this.gx + this._shape.GetNodeWidth() * 0.5;
         }
 
-        GetCenterGY(): number {
-            return this.GetGY() + this.Shape.GetNodeHeight() * 0.5;
+        get centerGy(): number {
+            return this.gy + this._shape.GetNodeHeight() * 0.5;
         }
 
         // For memorization
-        private static GlobalPositionCache: { [index: string]: Point } = null;
-        public static SetGlobalPositionCacheEnabled(State: boolean) {
-            if (State && TreeNodeView.GlobalPositionCache == null) {
-                TreeNodeView.GlobalPositionCache = {};
+        private static globalPositionCache: { [index: string]: Point } = null;
+        public static setGlobalPositionCacheEnabled(State: boolean) {
+            if (State && TreeNodeView.globalPositionCache == null) {
+                TreeNodeView.globalPositionCache = {};
             } else if (!State) {
-                TreeNodeView.GlobalPositionCache = null;
+                TreeNodeView.globalPositionCache = null;
             }
         }
 
@@ -155,97 +153,96 @@ module VisModelJS {
             Scale-independent and transform-independent distance from leftside of GSN.
             @return always (0, 0) if this is top goal.
         */
-        private GetGlobalPosition(): Point {
-            if (TreeNodeView.GlobalPositionCache != null && TreeNodeView.GlobalPositionCache[this.Label]) {
-                return TreeNodeView.GlobalPositionCache[this.Label].clone();
+        private get globalPosition(): Point {
+            if (TreeNodeView.globalPositionCache != null && TreeNodeView.globalPositionCache[this.label]) {
+                return TreeNodeView.globalPositionCache[this.label].clone();
             }
-            if (this.Parent == null) {
-                return new Point(this.RelativeX, this.RelativeY);
+            if (this.parent == null) {
+                return new Point(this.relativeX, this.relativeY);
             }
-            var ParentPosition = this.Parent.GetGlobalPosition();
-            ParentPosition.x += this.RelativeX;
-            ParentPosition.y += this.RelativeY;
-            if (TreeNodeView.GlobalPositionCache != null) {
-                TreeNodeView.GlobalPositionCache[this.Label] = ParentPosition.clone();
+            var parentPos = this.parent.globalPosition;
+            parentPos.x += this.relativeX;
+            parentPos.y += this.relativeY;
+            if (TreeNodeView.globalPositionCache != null) {
+                TreeNodeView.globalPositionCache[this.label] = parentPos.clone();
             }
-            return ParentPosition;
+            return parentPos;
         }
 
         /**
             Append content elements of this node to layer fragments.
         */
-        Render(DivFrag: DocumentFragment, SvgNodeFrag: DocumentFragment, SvgConnectionFrag: DocumentFragment): void {
-            this.Shape.Render(DivFrag, SvgNodeFrag, SvgConnectionFrag);
+        render(htmlLayerFlagment: DocumentFragment, svgLayerFlagment: DocumentFragment, svgConnectorFlagment: DocumentFragment): void {
+            this._shape.Render(htmlLayerFlagment, svgLayerFlagment, svgConnectorFlagment);
         }
 
         /**
             Try to reuse shape.
         */
-        SaveFlags(OldView: TreeNodeView): void {
-            if (OldView) {
-                this._folded = OldView._folded;
+        copyFlagsFromOldView(oldView: TreeNodeView): void {
+            if (oldView) {
+                this._folded = oldView._folded;
                 
-                var IsContentChanged = this.Content != OldView.Content;
-                var IsTypeChanged = false;//this.GetNodeType() != OldView.GetNodeType();
+                var isContentChanged = this.content != oldView.content;
 
-                if (IsContentChanged || IsTypeChanged) {
-                    this.GetShape().SetColorStyle(OldView.GetShape().GetColorStyle());
+                if (isContentChanged) {
+                    this.shape.setColorStyle(oldView.shape.getColorStyle());
                 } else {
-                    this.SetShape(OldView.GetShape());
+                    this.shape = oldView.shape;
                 }
             }
         }
 
-        private GetConnectorPosition(Dir: Direction, GlobalPosition: Point): Point {
-            var P = this.Shape.GetConnectorPosition(Dir);
-            P.x += GlobalPosition.x;
-            P.y += GlobalPosition.y;
+        private getConnectorPosition(dir: Direction, globalPosition: Point): Point {
+            var P = this._shape.GetConnectorPosition(dir);
+            P.x += globalPosition.x;
+            P.y += globalPosition.y;
             return P;
         }
 
         /**
             Update DOM node position by the position that layout engine caluculated
         */
-        UpdateNodePosition(AnimationCallbacks?: Function[], Duration?: number, ScreenRect?: Rect, UnfoldBaseNode?: TreeNodeView): void {
-            Duration = Duration || 0;
-            if (!this.IsVisible) {
+        updateNodePosition(animationCallbacks?: Function[], duration?: number, screenRect?: Rect, unfoldBaseNode?: TreeNodeView): void {
+            duration = duration || 0;
+            if (!this.visible) {
                 return
             }
-            var UpdateSubNode = (SubNode: TreeNodeView) => {
-                var Base = UnfoldBaseNode;
-                if (!Base && SubNode.Shape.WillFadein()) {
-                    Base = this;
+            var updateSubNode = (SubNode: TreeNodeView) => {
+                var base = unfoldBaseNode;
+                if (!base && SubNode._shape.WillFadein()) {
+                    base = this;
                 }
-                if (Base && Duration > 0) {
-                    SubNode.Shape.SetFadeinBasePosition(Base.Shape.GetGXCache(), Base.Shape.GetGYCache());
-                    SubNode.UpdateNodePosition(AnimationCallbacks, Duration, ScreenRect, Base);
+                if (base && duration > 0) {
+                    SubNode._shape.SetFadeinBasePosition(base._shape.GetGXCache(), base._shape.GetGYCache());
+                    SubNode.updateNodePosition(animationCallbacks, duration, screenRect, base);
                 } else {
-                    SubNode.UpdateNodePosition(AnimationCallbacks, Duration, ScreenRect);
+                    SubNode.updateNodePosition(animationCallbacks, duration, screenRect);
                 }
             }
 
-            var GlobalPosition = this.GetGlobalPosition();
-            this.Shape.MoveTo(AnimationCallbacks, GlobalPosition.x, GlobalPosition.y, Duration, ScreenRect);
+            var gp = this.globalPosition;
+            this._shape.MoveTo(animationCallbacks, gp.x, gp.y, duration, screenRect);
 
-            var ArrowDirections = [Direction.Bottom, Direction.Right, Direction.Left];
-            var SubNodeTypes = [this.Children, this.Right, this.Left];
+            var directions = [Direction.Bottom, Direction.Right, Direction.Left];
+            var subNodeTypes = [this.childNodes, this.rightNodes, this.leftNodes];
             for (var i = 0; i < 3; ++i) {
-                var P1 = this.GetConnectorPosition(ArrowDirections[i], GlobalPosition);
-                var ArrowToDirection = ReverseDirection(ArrowDirections[i]);
-                this.ForEachVisibleSubNode(SubNodeTypes[i], (SubNode: TreeNodeView) => {
-                    var P2 = SubNode.GetConnectorPosition(ArrowToDirection, SubNode.GetGlobalPosition());
-                    UpdateSubNode(SubNode);
-                    SubNode.Shape.MoveArrowTo(AnimationCallbacks, P1, P2, ArrowDirections[i], Duration, ScreenRect);
-                    SubNode.ParentDirection = ReverseDirection(ArrowDirections[i]);
+                var p1 = this.getConnectorPosition(directions[i], gp);
+                var arrowGoalDirection = reverseDirection(directions[i]);
+                this.forEachVisibleSubNode(subNodeTypes[i], (SubNode: TreeNodeView) => {
+                    var p2 = SubNode.getConnectorPosition(arrowGoalDirection, SubNode.globalPosition);
+                    updateSubNode(SubNode);
+                    SubNode._shape.MoveArrowTo(animationCallbacks, p1, p2, directions[i], duration, screenRect);
+                    SubNode.parentDirection = reverseDirection(directions[i]);
                 });
             }
         }
 
-        private ForEachVisibleSubNode(SubNodes: TreeNodeView[], Action: (NodeView) => any): boolean {
-            if (SubNodes != null && !this._folded) {
-                for (var i = 0; i < SubNodes.length; i++) {
-                    if (SubNodes[i].IsVisible) {
-                        if (Action(SubNodes[i]) === false) {
+        private forEachVisibleSubNode(subNodes: TreeNodeView[], action: (NodeView) => any): boolean {
+            if (subNodes != null && !this._folded) {
+                for (var i = 0; i < subNodes.length; i++) {
+                    if (subNodes[i].visible) {
+                        if (action(subNodes[i]) === false) {
                             return false;
                         }
                     }
@@ -254,34 +251,34 @@ module VisModelJS {
             return true;
         }
 
-        ForEachVisibleChildren(Action: (SubNode: TreeNodeView) => any): void {
-            this.ForEachVisibleSubNode(this.Children, Action);
+        forEachVisibleChildren(action: (subNode: TreeNodeView) => any): void {
+            this.forEachVisibleSubNode(this.childNodes, action);
         }
 
-        ForEachVisibleRightNodes(Action: (SubNode: TreeNodeView) => any): void {
-            this.ForEachVisibleSubNode(this.Right, Action);
+        forEachVisibleRightNodes(action: (subNode: TreeNodeView) => any): void {
+            this.forEachVisibleSubNode(this.rightNodes, action);
         }
 
-        ForEachVisibleLeftNodes(Action: (SubNode: TreeNodeView) => any): void {
-            this.ForEachVisibleSubNode(this.Left, Action);
+        forEachVisibleLeftNodes(action: (subNode: TreeNodeView) => any): void {
+            this.forEachVisibleSubNode(this.leftNodes, action);
         }
 
-        ForEachVisibleAllSubNodes(Action: (SubNode: TreeNodeView) => any): boolean {
-            if (this.ForEachVisibleSubNode(this.Left, Action) &&
-                this.ForEachVisibleSubNode(this.Right, Action) &&
-                this.ForEachVisibleSubNode(this.Children, Action)) return true;
+        forEachVisibleAllSubNodes(action: (subNode: TreeNodeView) => any): boolean {
+            if (this.forEachVisibleSubNode(this.leftNodes, action) &&
+                this.forEachVisibleSubNode(this.rightNodes, action) &&
+                this.forEachVisibleSubNode(this.childNodes, action)) return true;
             return false;
         }
 
-        TraverseVisibleNode(Action: (SubNode: TreeNodeView) => any): void {
-            Action(this);
-            this.ForEachVisibleAllSubNodes((SubNode: TreeNodeView) => { SubNode.TraverseVisibleNode(Action); });
+        traverseVisibleNode(action: (subNode: TreeNodeView) => any): void {
+            action(this);
+            this.forEachVisibleAllSubNodes((subNode: TreeNodeView) => { subNode.traverseVisibleNode(action); });
         }
 
-        private ForEachSubNode(SubNodes: TreeNodeView[], Action: (NodeView) => any): boolean {
-            if (SubNodes != null) {
-                for (var i = 0; i < SubNodes.length; i++) {
-                    if (Action(SubNodes[i]) === false) {
+        private forEachSubNode(subNodes: TreeNodeView[], action: (NodeView) => any): boolean {
+            if (subNodes != null) {
+                for (var i = 0; i < subNodes.length; i++) {
+                    if (action(subNodes[i]) === false) {
                         return false;
                     }
                 }
@@ -289,16 +286,16 @@ module VisModelJS {
             return true;
         }
 
-        ForEachAllSubNodes(Action: (SubNode: TreeNodeView) => any): boolean {
-            if (this.ForEachSubNode(this.Left, Action) &&
-                this.ForEachSubNode(this.Right, Action) &&
-                this.ForEachSubNode(this.Children, Action)) return true;
+        forEachAllSubNodes(action: (subNode: TreeNodeView) => any): boolean {
+            if (this.forEachSubNode(this.leftNodes, action) &&
+                this.forEachSubNode(this.rightNodes, action) &&
+                this.forEachSubNode(this.childNodes, action)) return true;
             return false;
         }
 
-        TraverseNode(Action: (SubNode: TreeNodeView) => any): boolean {
-            if (Action(this) === false) return false;
-            if (this.ForEachAllSubNodes((SubNode: TreeNodeView) => { return SubNode.TraverseNode(Action); })) return true;
+        traverseNode(action: (subNode: TreeNodeView) => any): boolean {
+            if (action(this) === false) return false;
+            if (this.forEachAllSubNodes(subNode => subNode.traverseNode(action))) return true;
             return false;
         }
 
@@ -306,79 +303,71 @@ module VisModelJS {
             Clear position cache and enable to fading in when the node re-appearing.
             This method should be called after the node became invibible or the node never fade in.
         */
-        ClearAnimationCache(Force?: boolean): void {
-            if (Force || !this.IsVisible) {
-                this.GetShape().ClearAnimationCache();
+        clearAnimationCache(force?: boolean): void {
+            if (force || !this.visible) {
+                this.shape.ClearAnimationCache();
             }
-            if (Force || this._folded) {
-                this.ForEachAllSubNodes((SubNode: TreeNodeView) => {
-                    SubNode.ClearAnimationCache(true);
+            if (force || this._folded) {
+                this.forEachAllSubNodes((SubNode: TreeNodeView) => {
+                    SubNode.clearAnimationCache(true);
                 });
             }
             else {
-                this.ForEachAllSubNodes((SubNode: TreeNodeView) => {
-                    SubNode.ClearAnimationCache(false);
+                this.forEachAllSubNodes((SubNode: TreeNodeView) => {
+                    SubNode.clearAnimationCache(false);
                 });
             }
         }
 
-        HasSideNode(): boolean {
-            return (this.Left != null && this.Left.length > 0) || (this.Right != null && this.Right.length > 0)
+        get hasSideNode(): boolean {
+            return (this.leftNodes != null && this.leftNodes.length > 0) || (this.rightNodes != null && this.rightNodes.length > 0)
         }
 
-        HasChildren(): boolean {
-            return (this.Children != null && this.Children.length > 0);
+        get hasChildren(): boolean {
+            return (this.childNodes != null && this.childNodes.length > 0);
         }
 
-        AddColorStyle(ColorStyle: string): void {
-            this.Shape.AddColorStyle(ColorStyle);
-        }
-
-        RemoveColorStyle(ColorStyle: string): void {    
-            this.Shape.RemoveColorStyle(ColorStyle);
-        }
-
-        IsInRect(Target: Rect): boolean {
+        isInRect(target: Rect): boolean {
             // While animation playing, cached position(visible position) != this.position(logical position)
-            var GXC = this.Shape.GetGXCache();
-            var GYC = this.Shape.GetGYCache();
-            var Pos: Point;
-            if (GXC != null && GYC != null) {
-                Pos = new Point(GXC, GYC);
+            var gxCached = this._shape.GetGXCache();
+            var gyCached = this._shape.GetGYCache();
+            var pos: Point;
+            if (gxCached != null && gyCached != null) {
+                pos = new Point(gxCached, gyCached);
             } else {
-                Pos = this.GetGlobalPosition();
+                pos = this.globalPosition;
             }
-            if (Pos.x > Target.x + Target.width || Pos.y > Target.y + Target.height) {
+            if (pos.x > target.x + target.width || pos.y > target.y + target.height) {
                 return false;
             }
-            Pos.x += this.Shape.GetNodeWidth();
-            Pos.y += this.Shape.GetNodeHeight();
-            if (Pos.x < Target.x || Pos.y < Target.y) {
+            pos.x += this._shape.GetNodeWidth();
+            pos.y += this._shape.GetNodeHeight();
+            if (pos.x < target.x || pos.y < target.y) {
                 return false;
             }
             return true;
         }
 
-        IsConnectorInRect(Target: Rect): boolean {
-            if (!this.Parent) {
+        isConnectorInRect(target: Rect): boolean {
+            if (!this.parent) {
                 return false;
             }
-            var PA: Point;
-            var PB: Point;
-            if (this.Shape.GetGXCache() != null && this.Shape.GetGYCache() != null) {
-                PA = this.Shape.GetArrowP1Cache();
-                PB = this.Shape.GetArrowP2Cache();
+            var pa: Point;
+            var pb: Point;
+            if (this._shape.GetGXCache() != null && this._shape.GetGYCache() != null) {
+                pa = this._shape.GetArrowP1Cache();
+                pb = this._shape.GetArrowP2Cache();
             } else {
-                PA = this.GetConnectorPosition(this.ParentDirection, this.GetGlobalPosition());
-                PB = this.Parent.GetConnectorPosition(ReverseDirection(this.ParentDirection), this.Parent.GetGlobalPosition());
+                pa = this.getConnectorPosition(this.parentDirection, this.globalPosition);
+                pb = this.parent.getConnectorPosition(reverseDirection(this.parentDirection), this.parent.globalPosition);
             }
-            var Pos = new Point(Math.min(PA.x, PB.x), Math.min(PA.y, PB.y));
-            if (Pos.x > Target.x + Target.width || Pos.y > Target.y + Target.height) {
+            var pos = new Point(Math.min(pa.x, pb.x), Math.min(pa.y, pb.y));
+            if (pos.x > target.x + target.width || pos.y > target.y + target.height) {
                 return false;
             }
-            Pos.x = Math.max(PA.x, PB.x);
-            Pos.y = Math.max(PA.y, PB.y);
-            if (Pos.x < Target.x || Pos.y < Target.y) {
+            pos.x = Math.max(pa.x, pb.x);
+            pos.y = Math.max(pa.y, pb.y);
+            if (pos.x < target.x || pos.y < target.y) {
                 return false;
             }
             return true;
@@ -388,11 +377,11 @@ module VisModelJS {
            @method FoldDeepSubGoals
            @param {NodeView} NodeView
         */
-        FoldDeepSubGoals(limitDepth: number): void {
+        foldDeepSubGoals(limitDepth: number): void {
             if (limitDepth <= 0) {
                 this.folded = true;
             } else {
-                this.ForEachVisibleChildren(SubNode => SubNode.FoldDeepSubGoals(limitDepth - 1));
+                this.forEachVisibleChildren(SubNode => SubNode.foldDeepSubGoals(limitDepth - 1));
             }
         }
 

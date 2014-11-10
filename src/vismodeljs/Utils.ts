@@ -382,7 +382,7 @@ module VisModelJS {
         Left, Top, Right, Bottom
     }
 
-    export function ReverseDirection(Dir: Direction): Direction {
+    export function reverseDirection(Dir: Direction): Direction {
         return (Dir + 2) & 3;
     }
 }

@@ -233,17 +233,17 @@ module VisModelJS {
                 var div = document.createElement("div");
                 this.Content = div;
 
-                div.id = this.NodeView.Label;
-                div.setAttribute("data-nodelabel", this.NodeView.Label);
+                div.id = this.NodeView.label;
+                div.setAttribute("data-nodelabel", this.NodeView.label);
 
-                if (this.NodeView.Label) {
+                if (this.NodeView.label) {
                     var h4 = document.createElement("h4");
-                    h4.textContent = this.NodeView.Label;
+                    h4.textContent = this.NodeView.label;
                     div.appendChild(h4);
                 }
-                if (this.NodeView.Content) {
+                if (this.NodeView.content) {
                     var p = document.createElement("p");
-                    p.innerText = this.NodeView.Content.trim();
+                    p.innerText = this.NodeView.content.trim();
                     div.appendChild(p);
                 }
                 this.UpdateHtmlClass();
@@ -257,7 +257,7 @@ module VisModelJS {
 
         Render(HtmlContentFragment: DocumentFragment, SvgNodeFragment: DocumentFragment, SvgConnectionFragment: DocumentFragment): void {
             SvgNodeFragment.appendChild(this.ShapeGroup);
-            if (this.ArrowPath != null && this.NodeView.Parent != null) {
+            if (this.ArrowPath != null && this.NodeView.parent != null) {
                 SvgConnectionFragment.appendChild(this.ArrowPath);
             }
             HtmlContentFragment.appendChild(this.Content);
@@ -280,7 +280,7 @@ module VisModelJS {
         }
 
         SetPosition(x: number, y: number): void {
-            if (this.NodeView.IsVisible) {
+            if (this.NodeView.visible) {
                 var div = this.Content;
                 if (div != null) {
                     div.style.left = x + "px";
@@ -523,11 +523,11 @@ module VisModelJS {
             }
         }
 
-        GetColorStyle(): string[] {
+        getColorStyle(): string[] {
             return this.ColorStyles;
         }
 
-        SetColorStyle(Styles: string[]): void {
+        setColorStyle(Styles: string[]): void {
             this.ColorStyles = Styles;
             if (this.ColorStyles.indexOf(ColorStyle.Default) < 0) {
                 this.ColorStyles.push(ColorStyle.Default);
