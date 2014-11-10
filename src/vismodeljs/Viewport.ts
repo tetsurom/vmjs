@@ -1,124 +1,118 @@
 
 module VisModelJS {
     export class Pointer {
-        constructor(public X: number, public Y: number, public ID: number) { }
-        SetPosition(X: number, Y: number) {
-            this.X = X;
-            this.Y = Y;
+        constructor(public x: number, public y: number, public id: number) { }
+        SetPosition(x: number, y: number) {
+            this.x = x;
+            this.y = y;
         }
     }
 
     /**
         Controll scroll by mouse, touch and pen and zoom by wheel.
-        @class AssureNote.ScrollManager
-        @for AssureNote.ViewportManager
+        @class VisModelJS.ScrollManager
+        @for VisModelJS.ViewportManager
     */
     export class ScrollManager {
-        private CurrentX: number = 0;
-        private CurrentY: number = 0;
-        private Dx: number = 0;
-        private Dy: number = 0;
-        private MainPointerID: number = null;
-        private Pointers: { [index: number]: Pointer } = [];
+        private currentX: number = 0;
+        private currentY: number = 0;
+        private dx: number = 0;
+        private dy: number = 0;
+        private mainPointerID: number = null;
+        private pointers: { [index: number]: Pointer } = [];
 
         private timer: number = 0;
         private ANIMATE_THRESHOLD: number = 5;
         private SPEED_MAX: number = 100;
 
 
-        constructor(private Viewport: ViewportManager) {
+        constructor(private viewport: ViewportManager) {
         }
 
-        private StartDrag(InitialX: number, InitialY: number) {
-            this.CurrentX = InitialX;
-            this.CurrentY = InitialY;
+        private startDrag(initialX: number, initialY: number) {
+            this.currentX = initialX;
+            this.currentY = initialY;
             try {
-                if (this.OnStartDrag) {
-                    this.OnStartDrag(this.Viewport);
+                if (this.onStartDrag) {
+                    this.onStartDrag(this.viewport);
                 }
             } catch (e) {
             }
         }
 
-        private UpdateDrag(CurrentX: number, CurrentY: number) {
-            this.Dx = CurrentX - this.CurrentX;
-            this.Dy = CurrentY - this.CurrentY;
-            var speed = this.Dx * this.Dx + this.Dy + this.Dy;
+        private updateDrag(currentX: number, currentY: number) {
+            this.dx = currentX - this.currentX;
+            this.dy = currentY - this.currentY;
+            var speed = this.dx * this.dx + this.dy + this.dy;
             if (speed > this.SPEED_MAX * this.SPEED_MAX) {
-                this.Dx *= ((this.SPEED_MAX * this.SPEED_MAX) / speed);
-                this.Dy *= ((this.SPEED_MAX * this.SPEED_MAX) / speed);
+                this.dx *= ((this.SPEED_MAX * this.SPEED_MAX) / speed);
+                this.dy *= ((this.SPEED_MAX * this.SPEED_MAX) / speed);
             }
 
-            this.CurrentX = CurrentX;
-            this.CurrentY = CurrentY;
-            if (this.OnDragged) {
-                this.OnDragged(this.Viewport);
+            this.currentX = currentX;
+            this.currentY = currentY;
+            if (this.onDragged) {
+                this.onDragged(this.viewport);
             }
         }
 
-        private GetMainPointer(): Pointer {
-            return this.Pointers[this.MainPointerID];
+        private getMainPointer(): Pointer {
+            return this.pointers[this.mainPointerID];
         }
 
-        private IsDragging(): boolean {
-            return this.MainPointerID != null;
+        private isDragging(): boolean {
+            return this.mainPointerID != null;
         }
 
-        private StopAnimation(): void {
+        private stopAnimation(): void {
             clearInterval(this.timer);
-            this.Dx = 0;
-            this.Dy = 0;
+            this.dx = 0;
+            this.dy = 0;
         }
 
-        private EndDrag() {
-            this.MainPointerID = null;
-            this.Viewport.SetEventMapLayerPosition(false);
+        private endDrag() {
+            this.mainPointerID = null;
+            this.viewport.SetEventMapLayerPosition(false);
             try {
-                if (this.OnEndDrag) {
-                    this.OnEndDrag(this.Viewport);
+                if (this.onEndDrag) {
+                    this.onEndDrag(this.viewport);
                 }
             } catch (e) {
             }
         }
 
-        OnDragged: (Viewport: ViewportManager) => void;
-        OnStartDrag: (Viewport: ViewportManager) => void;
-        OnEndDrag: (Viewport: ViewportManager) => void;
+        onDragged: (viewport: ViewportManager) => void;
+        onStartDrag: (viewport: ViewportManager) => void;
+        onEndDrag: (viewport: ViewportManager) => void;
 
-        OnPointerEvent(e: PointerEvent, Screen: ViewportManager) {
+        onPointerEvent(e: PointerEvent, viewport: ViewportManager) {
             //var Log = (e: PointerEvent) => {
-            //    console.log("pointer#" + e.pointerId + " " + e.type.substr(7));
-            //    console.log("#pointers " + Object.keys(this.Pointers).length)
+            //    console.log("pointer#" + e.pointerId + " " + e.type);
+            //    //console.log("#pointers " + Object.keys(this.pointers).length)
             //}
             switch (e.type) {
-                case "pointerdown":
-                    if (e.pointerType == "mouse" && e.button != 0) {
-                        return;
-                    }
-                    if (!this.Pointers[e.pointerId]) {
-                        this.Pointers[e.pointerId] = new Pointer(e.clientX, e.clientY, e.pointerId);
+                case "trackstart":
+                    if (!this.pointers[e.pointerId]) {
+                        this.pointers[e.pointerId] = new Pointer(e.clientX, e.clientY, e.pointerId);
                         e.preventDefault();
                         e.stopPropagation();
                         //Log(e);
                     }
                     break;
-                case "pointerout":
-                case "pointerleave":
-                case "pointercancel":
-                case "pointerup":
-                    if (!this.Pointers[e.pointerId]) {
+                case "trackend":
+                    if (!this.pointers[e.pointerId]) {
                         return
                     }
-                    delete this.Pointers[e.pointerId];
+                    delete this.pointers[e.pointerId];
                     e.preventDefault();
                     e.stopPropagation();
                     //Log(e);
                     break;
-                case "pointermove":
-                    if (!this.Pointers[e.pointerId]) {
+                case "track":
+                    if (!this.pointers[e.pointerId]) {
                         return
                     }
-                    this.Pointers[e.pointerId].SetPosition(e.clientX, e.clientY);
+                    this.pointers[e.pointerId].SetPosition(e.clientX, e.clientY);
                     e.preventDefault();
                     e.stopPropagation();
                     break;
@@ -126,61 +120,55 @@ module VisModelJS {
                     return;
             }
 
-            var IsTherePointer: boolean = Object.keys(this.Pointers).length > 0;
-            var HasDragJustStarted: boolean = IsTherePointer && !this.IsDragging();
-            var HasDragJustEnded: boolean = !this.GetMainPointer() && this.IsDragging();
+            var isTherePointer: boolean = Object.keys(this.pointers).length > 0;
+            var hasDragJustStarted: boolean = isTherePointer && !this.isDragging();
+            var hasDragJustEnded: boolean = !this.getMainPointer() && this.isDragging();
 
-            if (IsTherePointer) {
-                if (HasDragJustStarted) {
-                    this.StopAnimation();
+            if (isTherePointer) {
+                if (hasDragJustStarted) {
+                    this.stopAnimation();
                     this.timer = null;
-                    var mainPointer: Pointer = this.Pointers[Object.keys(this.Pointers)[0]];
-                    this.MainPointerID = mainPointer.ID;
-                    this.Viewport.SetEventMapLayerPosition(true);
-                    this.StartDrag(mainPointer.X, mainPointer.Y);
+                    var mainPointer: Pointer = this.pointers[Object.keys(this.pointers)[0]];
+                    this.mainPointerID = mainPointer.id;
+                    this.viewport.SetEventMapLayerPosition(true);
+                    this.startDrag(mainPointer.x, mainPointer.y);
                 } else {
-                    var mainPointer = this.GetMainPointer();
+                    var mainPointer = this.getMainPointer();
                     if (mainPointer) {
-                        this.UpdateDrag(mainPointer.X, mainPointer.Y);
-                        Screen.AddOffset(this.Dx, this.Dy);
+                        this.updateDrag(mainPointer.x, mainPointer.y);
+                        viewport.AddOffset(this.dx, this.dy);
                     } else {
-                        this.EndDrag();
+                        this.endDrag();
                     }
                 }
             } else {
-                if (HasDragJustEnded) {
+                if (hasDragJustEnded) {
                     if (this.timer) {
-                        this.StopAnimation();
+                        this.stopAnimation();
                         this.timer = null;
                     }
                     this.timer = setInterval(() => {
-                        if (Math.abs(this.Dx) < this.ANIMATE_THRESHOLD && Math.abs(this.Dy) < this.ANIMATE_THRESHOLD) {
-                            this.StopAnimation();
+                        if (Math.abs(this.dx) < this.ANIMATE_THRESHOLD && Math.abs(this.dy) < this.ANIMATE_THRESHOLD) {
+                            this.stopAnimation();
                         }
-                        this.CurrentX += this.Dx;
-                        this.CurrentY += this.Dy;
-                        this.Dx *= 0.95;
-                        this.Dy *= 0.95;
-                        Screen.AddOffset(this.Dx, this.Dy);
+                        this.currentX += this.dx;
+                        this.currentY += this.dy;
+                        this.dx *= 0.95;
+                        this.dy *= 0.95;
+                        viewport.AddOffset(this.dx, this.dy);
                     }, 16);
                 }
-                this.EndDrag();
+                this.endDrag();
             }
         }
 
-        OnDoubleTap(e: PointerEvent, Screen: ViewportManager) {
-            //var width: number = Screen.ContentLayer.clientWidth;
-            //var height: number = Screen.ContentLayer.clientHeight;
-            //var pointer = this.Pointers[0];
-        }
-
-        OnMouseWheel(e: { deltaX: number; deltaY: number }, Screen: ViewportManager) {
-            Screen.SetCameraScale(Screen.GetCameraScale() * (1 + e.deltaY * 0.02));
+        onMouseWheel(e: WheelEvent, screen: ViewportManager) {
+            screen.SetCameraScale(screen.GetCameraScale() * (1 + e.deltaY * 0.02));
         }
     }
 
     /**
-        @class AssureNote.ViewportManager
+        @class VisModelJS.ViewportManager
     */
     export class ViewportManager extends EventTarget {
         ScrollManager: ScrollManager = new ScrollManager(this);
@@ -204,16 +192,19 @@ module VisModelJS {
             this.SetCameraPageCenter(this.GetPageCenterX(), this.GetPageCenterY());
             Utils.setTransformOriginToElement(this.Panel.ContentLayer, "left top");
             this.UpdateAttr();
-            var OnPointer = (e: PointerEvent) => { if (this.IsPointerEnabled) { this.ScrollManager.OnPointerEvent(e, this); } };
-            ["down", "move", "up", "out", "leave", "cancel"].forEach((Name) => {
-                this.Panel.RootElement.addEventListener("pointer" + Name, OnPointer, false);
+            var onPointer = (e: PointerEvent) => { if (this.IsPointerEnabled) { this.ScrollManager.onPointerEvent(e, this); } };
+
+            ["trackstart", "trackend", "track"].forEach((name) => {
+                PolymerGestures.addEventListener(this.Panel.RootElement, name, onPointer);
             });
-            var OnWheel = (e: any) => {
+
+            var OnWheel = (e: WheelEvent) => {
                 if (this.IsPointerEnabled) {
-                    this.ScrollManager.OnMouseWheel(e, this);
+                    e.preventDefault();
+                    this.ScrollManager.onMouseWheel(e, this);
                 }
             };
-            this.Panel.EventMapLayer.addEventListener('mousewheel', OnWheel);
+            this.Panel.RootElement.addEventListener('mousewheel', OnWheel);
         }
 
         /**
@@ -224,8 +215,13 @@ module VisModelJS {
             return this.Scale;
         }
 
-        private static LimitScale(Scale: number): number {
-            return Math.max(0.2, Math.min(20.0, Scale));
+        public MaxScale = 2.0;
+        public MinScale = 0.2;
+
+        private LimitScale(Scale: number): number {
+            return Scale < this.MinScale ? this.MinScale :
+                   Scale > this.MaxScale ? this.MaxScale :
+                                           Scale;
         }
 
         /**
@@ -233,7 +229,7 @@ module VisModelJS {
             @param {number} Scale Scale of camera. 1.0 for 100%.
         */
         SetCameraScale(Scale: number): void {
-            this.Scale = ViewportManager.LimitScale(Scale);
+            this.Scale = this.LimitScale(Scale);
             this.UpdateAttr();
         }
 
@@ -450,7 +446,7 @@ module VisModelJS {
         }
 
         CreateMoveToTaskFunction(GX: number, GY: number, Scale: number, Duration: number): (a: number, b:number, c:number) => void {
-            Scale = ViewportManager.LimitScale(Scale);
+            Scale = this.LimitScale(Scale);
             if (Duration <= 0) {
                 return null;
             }
