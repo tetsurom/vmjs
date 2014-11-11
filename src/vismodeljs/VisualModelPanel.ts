@@ -62,6 +62,7 @@ module VisModelJS {
             this.makeItLayer(this.SVGLayerBox, "100%", "100%");
 
             this.SVGLayer = Utils.createSVGElement("g");
+            this.SVGLayer.className.baseVal = "vismodel-svglayer";
             this.SVGLayerConnectorGroup = Utils.createSVGElement("g");
             this.SVGLayerNodeGroup = Utils.createSVGElement("g");
 
@@ -77,6 +78,8 @@ module VisModelJS {
             // Create HTML Layer
             this.EventMapLayer = document.createElement("div");
             this.ContentLayer = document.createElement("div");
+            this.EventMapLayer.className = "vismodel-eventmaplayer";
+            this.ContentLayer.className = "vismodel-contentlayer";
 
             this.makeItLayer(this.EventMapLayer, "100%", "100%");
             this.makeItLayer(this.ContentLayer, "0px", "0px");
@@ -324,19 +327,6 @@ module VisModelJS {
             return this.FocusedLabel;
         }
 
-        HasMonitorNode(): boolean {
-            for(var Label in this.ViewMap) {
-                var View = this.ViewMap[Label];
-            }
-            return false;
-        }
-
-        //DrawGSN(Node: GSNNode): void {
-        //    var NewNodeView: NodeView = new NodeView(Node, true);
-        //    this.InitializeView(NewNodeView);
-        //    this.Draw();
-        //}
-
         InitializeView(NodeView: TreeNodeView): void {
             this.TopNodeView = NodeView;
             this.ViewMap = {};
@@ -485,7 +475,7 @@ module VisModelJS {
             ////console.log("Visible:Hidden = " + Object.keys(this.OnScreenNodeMap).length + ":" + Object.keys(this.HiddenNodeMap).length);
         }
 
-        private Clear(): void {
+        Clear(): void {
             this.RootElement.style.display = "none";
             this.ContentLayer.innerHTML = "";
             this.SVGLayer.removeChild(this.SVGLayerConnectorGroup);
