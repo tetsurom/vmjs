@@ -177,8 +177,7 @@ window.onload = function(){
         node.folded = !node.folded;
         if (UA.isTrident()) {
             for (var k in panel.ViewMap) {
-                var Node = panel.ViewMap[k];
-                Node.shape.Content = null;
+                panel.ViewMap[k].shape.Content = null;
             }
             panel.Draw(panel.TopNodeView.label, 0, node);
         } else {
