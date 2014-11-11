@@ -211,11 +211,11 @@ module VisModelJS {
         }
 
         OnActivate(): void {
-            this.Viewport.IsPointerEnabled = true;
+            this.Viewport.isPointerEnabled = true;
         }
 
         OnDeactivate(): void {
-            this.Viewport.IsPointerEnabled = false;
+            this.Viewport.isPointerEnabled = false;
         }
 
         /**
@@ -240,7 +240,7 @@ module VisModelJS {
                 var NextNode: TreeNodeView = Node.constructor == String ? this.ViewMap[Node] : Node;
                 if (NextNode != null) {
                     this.ChangeFocusedLabel(NextNode.label);
-                    this.Viewport.MoveTo(NextNode.centerGx, NextNode.centerGy, this.Viewport.camera.scale, 50);
+                    this.Viewport.camera.moveTo(NextNode.centerGx, NextNode.centerGy, this.Viewport.camera.scale, 50);
                 }
             }
         }
@@ -387,7 +387,7 @@ module VisModelJS {
                     PageRect.x += FixedNodeDX;
                 }
                 var Scale = this.Viewport.camera.scale;
-                var Task = this.Viewport.CreateMoveTaskFunction(FixedNodeDX, FixedNodeDY, Scale, Duration);
+                var Task = this.Viewport.createMoveTaskFunction(FixedNodeDX, FixedNodeDY, Scale, Duration);
                 if (Task) {
                     FoldingAnimationCallbacks.push(Task);
                 } else {

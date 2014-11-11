@@ -171,7 +171,7 @@ window.onload = function(){
 
     panel.InitializeView(TopNode);
     panel.Draw();
-    panel.Viewport.camera.setPositionAndScale(TopNode.centerGx, TopNode.centerGy + panel.Viewport.pageHeight / 3, 1);
+    panel.Viewport.camera.setPositionAndScale(TopNode.centerGx, TopNode.centerGy + panel.Viewport.areaHeight / 3, 1);
     panel.addEventListener("dblclick", event => {
         var node = (<VisModelJS.NodeViewEvent>event).node;
         node.folded = !node.folded;
