@@ -155,9 +155,60 @@ module VisModelJS {
         }
 
         onMouseWheel(e: WheelEvent, screen: ViewportManager) {
-            screen.SetCameraScale(screen.GetCameraScale() * (1 + e.deltaY * 0.02));
+            screen.camera.scale *= 1 + e.deltaY * 0.02;
         }
     }
+
+    export interface Camera {
+        /**
+            @property gx
+            Scale-independent camera X-position in visual model.
+        */
+        gx: number;
+        /**
+            @property gy
+            Scale-independent camera Y-position in visual model.
+        */
+        gy: number;
+        /**
+            @method setPosition
+            @param {number} gx Scale-independent camera X position in visual model.
+            @param {number} gy Scale-independent camera Y position in visual model.
+        */
+        setPosition(gx: number, gy: number);
+        /**
+            Set camera's position and scale one time.
+            @method setPositionAndScale
+            @param {number} gx Scale-independent camera X position in visual model.
+            @param {number} gy Scale-independent camera Y position in visual model.
+            @param {number} scale Scale of camera. 1.0 for 100%.
+        */
+        setPositionAndScale(gx: number, gy: number, scale: number);
+        /**
+            @property scale
+            Scale of camera. 1.0 for 100%.
+        */
+        scale: number;
+        /**
+            @property centerPageX
+            X-position of camera's vanishing point in page.
+        */
+        centerPageX: number;
+        /**
+            @property centerPageY
+            Y-position of camera's vanishing point in page.
+        */
+        centerPageY: number;
+        /**
+            Set camera's vanishing point in web page.
+            @method setCenterPagePosition
+            @param {number} pageX X of camera's vanishing point in page.
+            @param {number} pageY Y of camera's vanishing point in page.
+        */
+        setCenterPagePosition(pageX: number, pageY: number);
+        limitRect: Rect;
+    }
+
 
     /**
         @class VisModelJS.ViewportManager
@@ -173,15 +224,51 @@ module VisModelJS {
         private CameraCenterPageY: number;
         public IsPointerEnabled: boolean = true;
         public OnScroll: (Viewport: ViewportManager) => void;
-        public CameraLimitRect: Rect;
+        private CameraLimitRect: Rect;
+        private _camera: Camera;
 
         constructor(private Panel: VisualModelPanel) {
             super();
 
+            var _viewport = this;
+            this._camera = {
+                get gx() { return _viewport.CameraGX; },
+                set gx(value) { var camera = <any>this; camera.setPosition(value, _viewport.CameraGY); },
+                get gy() { return _viewport.CameraGY; },
+                set gy(value) { var camera = <any>this; camera.setPosition(_viewport.CameraGX, value); },
+                get scale() { return _viewport.Scale; },
+                set scale(value) {
+                    _viewport.Scale = _viewport.LimitScale(value);
+                    _viewport.UpdateAttr();
+                },
+                setPosition: function (GX: number, GY: number): void {
+                    this.setOffset(_viewport.CameraCenterPageX - GX * _viewport.Scale, _viewport.CameraCenterPageY - GY * _viewport.Scale);
+                },
+
+                setPositionAndScale: function (GX: number, GY: number, Scale: number): void {
+                    _viewport.Scale = Scale;
+                    this.setOffset(_viewport.CameraCenterPageX - GX * _viewport.Scale, _viewport.CameraCenterPageY - GY * _viewport.Scale);
+                },
+                get centerPageX() { return _viewport.CameraCenterPageX; },
+                set centerPageX(value) { _viewport.CameraCenterPageX = value },
+                get centerPageY() { return _viewport.CameraCenterPageY; },
+                set centerPageY(value) { _viewport.CameraCenterPageY = value },
+                setCenterPagePosition: this.SetCameraPageCenter.bind(_viewport),
+                get limitRect() { return _viewport.CameraLimitRect; },
+                set limitRect(value) { _viewport.CameraLimitRect = value; },
+                // private
+                setOffset: function(PageX: number, PageY: number){
+                    _viewport.CameraGX = (_viewport.CameraCenterPageX - PageX) / _viewport.Scale;
+                    _viewport.CameraGY = (_viewport.CameraCenterPageY - PageY) / _viewport.Scale;
+                    _viewport.LimitCameraPosition();
+                    _viewport.UpdateAttr();
+                },
+            };
+
             window.addEventListener("resize", (e) => { this.UpdatePageRect(); });
             this.UpdatePageSize();
             this.UpdatePageRect();
-            this.SetCameraPageCenter(this.GetPageCenterX(), this.GetPageCenterY());
+            this.SetCameraPageCenter(this.pageCenterX, this.pageCenterY);
             Utils.setTransformOriginToElement(this.Panel.ContentLayer, "left top");
             this.UpdateAttr();
             var onPointer = (e: PointerEvent) => { if (this.IsPointerEnabled) { this.ScrollManager.onPointerEvent(e, this); } };
@@ -199,12 +286,8 @@ module VisModelJS {
             this.Panel.RootElement.addEventListener('mousewheel', OnWheel);
         }
 
-        /**
-            @method GetCameraScale
-            @return {number} Scale of camera. 1.0 for 100%.
-        */
-        GetCameraScale(): number {
-            return this.Scale;
+        get camera() {
+            return this._camera;
         }
 
         public MaxScale = 2.0;
@@ -215,21 +298,12 @@ module VisModelJS {
                    Scale > this.MaxScale ? this.MaxScale :
                                            Scale;
         }
-        
-        /**
-            @method SetCameraScale
-            @param {number} Scale Scale of camera. 1.0 for 100%.
-        */
-        SetCameraScale(Scale: number): void {
-            this.Scale = this.LimitScale(Scale);
-            this.UpdateAttr();
-        }
 
-        private GetOffsetPageX() {
+        private get offsetPageX() {
             return this.CameraCenterPageX - this.CameraGX * this.Scale;
         }
 
-        private GetOffsetPageY() {
+        private get offsetPageY() {
             return this.CameraCenterPageY - this.CameraGY * this.Scale;
         }
 
@@ -243,12 +317,12 @@ module VisModelJS {
             }
         }
 
-        private SetOffset(PageX: number, PageY: number): void {
-            this.CameraGX = (this.CameraCenterPageX - PageX) / this.Scale;
-            this.CameraGY = (this.CameraCenterPageY - PageY) / this.Scale;
-            this.LimitCameraPosition();
-            this.UpdateAttr();
-        }
+        //private SetOffset(PageX: number, PageY: number): void {
+        //    this.CameraGX = (this.CameraCenterPageX - PageX) / this.Scale;
+        //    this.CameraGY = (this.CameraCenterPageY - PageY) / this.Scale;
+        //    this.LimitCameraPosition();
+        //    this.UpdateAttr();
+        //}
 
         AddOffset(PageX: number, PageY: number): void {
             this.CameraGX -= PageX / this.Scale;
@@ -257,42 +331,14 @@ module VisModelJS {
             this.UpdateAttr();
         }
 
-        /**
-            @method GetCameraGX
-            @return {number} Scale-independent camera X position in GSN. 0 for leftside of topgoal.
-        */
-        GetCameraGX(): number {
-            return this.CameraGX;
-        }
+        //private SetCameraPosition(GX: number, GY: number): void {
+        //    this.SetOffset(this.CameraCenterPageX - GX * this.Scale, this.CameraCenterPageY - GY * this.Scale);
+        //}
 
-        /**
-            @method GetCameraGY
-            @return {number} Scale-independent camera Y position in GSN. 0 for top of topgoal.
-        */
-        GetCameraGY(): number {
-            return this.CameraGY;
-        }
-
-        /**
-            @method SetCameraPosition
-            @param {number} GX Scale-independent camera X position in GSN. 0 for leftside of topgoal.
-            @param {number} GY Scale-independent camera Y position in GSN. 0 for top of topgoal.
-        */
-        SetCameraPosition(GX: number, GY: number): void {
-            this.SetOffset(this.CameraCenterPageX - GX * this.Scale, this.CameraCenterPageY - GY * this.Scale);
-        }
-
-        /**
-            Set camera's position and scale one time.
-            @method SetCamera
-            @param {number} GX Scale-independent camera X position in GSN. 0 for leftside of topgoal.
-            @param {number} GY Scale-independent camera Y position in GSN. 0 for top of topgoal.
-            @param {number} Scale Scale of camera. 1.0 for 100%.
-        */
-        SetCamera(GX: number, GY: number, Scale: number): void {
-            this.Scale = Scale;
-            this.SetOffset(this.CameraCenterPageX - GX * this.Scale, this.CameraCenterPageY - GY * this.Scale);
-        }
+        //private SetCamera(GX: number, GY: number, Scale: number): void {
+        //    this.Scale = Scale;
+        //    this.SetOffset(this.CameraCenterPageX - GX * this.Scale, this.CameraCenterPageY - GY * this.Scale);
+        //}
 
         private MoveCamera(GX: number, GY: number, Scale: number): void {
             this.Scale += Scale;
@@ -301,29 +347,7 @@ module VisModelJS {
             this.UpdateAttr();
         }
 
-        /**
-            @method GetCameraPageCenterX
-            @return {number} X of camera's vanishing point in web page.
-        */
-        GetCameraPageCenterX(): number {
-            return this.CameraCenterPageX;
-        }
-
-        /**
-            @method GetCameraPageCenterY
-            @return {number} Y of camera's vanishing point in web page.
-        */
-        GetCameraPageCenterY(): number {
-            return this.CameraCenterPageY;
-        }
-
-        /**
-            Set camera's vanishing point in web page.
-            @method SetCameraPageCenter
-            @param {number} PageX X of camera's vanishing point in web page.
-            @param {number} PageY Y of camera's vanishing point in web page.
-        */
-        SetCameraPageCenter(PageX: number, PageY: number): void {
+        private SetCameraPageCenter(PageX: number, PageY: number): void {
             this.CameraCenterPageX = PageX;
             this.CameraCenterPageY = PageY;
         }
@@ -376,7 +400,7 @@ module VisModelJS {
             return new Rect(x1, y1, x2 - x1, y2 - y1); 
         }
 
-        GetPageRectInGxGy(): Rect {
+        get pageRectInGxGy(): Rect {
             var x1 = this.GXFromPageX(0);
             var y1 = this.GYFromPageY(0);
             var x2 = this.GXFromPageX(this.PageWidth);
@@ -384,20 +408,20 @@ module VisModelJS {
             return new Rect(x1, y1, x2 - x1, y2 - y1); 
         }
 
-        GetPageWidth(): number {
+        get pageWidth() {
             return this.PageWidth;
         }
 
-        GetPageHeight(): number {
+        get pageHeight() {
             return this.PageHeight;
         }
 
-        GetPageCenterX(): number {
-            return this.GetPageWidth() * 0.5;
+        get pageCenterX() {
+            return this.PageWidth * 0.5;
         }
 
-        GetPageCenterY(): number {
-            return this.GetPageHeight() * 0.5;
+        get pageCenterY() {
+            return this.PageHeight * 0.5;
         }
 
         private CameraMoveTask = new VisModelJS.AnimationFrameTask();
@@ -412,7 +436,7 @@ module VisModelJS {
             @async
         */
         Move(GX: number, GY: number, Scale: number, Duration: number): void {
-            this.MoveTo(this.GetCameraGX() + GX, this.GetCameraGY() + GY, Scale, Duration);
+            this.MoveTo(this.CameraGX + GX, this.CameraGY + GY, Scale, Duration);
         }
 
         /**
@@ -427,14 +451,14 @@ module VisModelJS {
         MoveTo(GX: number, GY: number, Scale: number, Duration: number): void {
             var Task = this.CreateMoveToTaskFunction(GX, GY, Scale, Duration);
             if (!Task) {
-                this.SetCamera(GX, GY, Scale);
+                this.camera.setPositionAndScale(GX, GY, Scale);
                 return;
             }
             this.CameraMoveTask.start(Duration, Task);
         }
 
         CreateMoveTaskFunction(GX: number, GY: number, Scale: number, Duration: number): (a: number, b: number, c: number) => void {
-            return this.CreateMoveToTaskFunction(this.GetCameraGX() + GX, this.GetCameraGY() + GY, Scale, Duration);
+            return this.CreateMoveToTaskFunction(this.CameraGX + GX, this.CameraGY + GY, Scale, Duration);
         }
 
         CreateMoveToTaskFunction(GX: number, GY: number, Scale: number, Duration: number): (a: number, b:number, c:number) => void {
@@ -443,10 +467,10 @@ module VisModelJS {
                 return null;
             }
 
-            var VX = (GX - this.GetCameraGX()) / Duration;
-            var VY = (GY - this.GetCameraGY()) / Duration;
+            var VX = (GX - this.CameraGX) / Duration;
+            var VY = (GY - this.CameraGY) / Duration;
 
-            var S0 = this.GetCameraScale();
+            var S0 = this.Scale;
             var ScaleRate = Scale / S0;
             var DInv = 1 / Duration;
             var ScaleFunction = (t: number) => S0 * Math.pow(ScaleRate, t * DInv);
@@ -486,8 +510,8 @@ module VisModelJS {
         }
 
         private UpdateAttr(): void {
-            var OffsetPageX = this.GetOffsetPageX();
-            var OffsetPageY = this.GetOffsetPageY();
+            var OffsetPageX = this.offsetPageX
+            var OffsetPageY = this.offsetPageY;
             if (!isNaN(OffsetPageX) && !isNaN(OffsetPageY)) {
                 var attr: string = ViewportManager.CreateTranformAttr(OffsetPageX, OffsetPageY, this.Scale);
                 var style: string = ViewportManager.CreateTransformStyle(OffsetPageX, OffsetPageY, this.Scale);

@@ -145,12 +145,22 @@ var createNodeViewFromP4DJson = function () {
 
 
 window.onload = function(){
-    //Browser detection
-    var UA = VisModelJS.Utils.UserAgant;
-    if (!UA.isBlink() && !UA.isWebkit() && !UA.isGecko()) {
-        alert('Not supported browser. Use Chrome/Safari/FireFox.');
-        return;
+
+    // IE dose not have Function#name. but it is needed for imprement 'instanceof'
+    if (!(<any>Function.prototype).name) {
+        Object.defineProperty(Function.prototype, "name", {
+            get: function () {
+                return this.toString().replace(/^\s*function\s*([^\(]*)[\S\s]+$/im, '$1');
+            }
+        });
     }
+
+    //Browser detection
+    //var UA = VisModelJS.Utils.UserAgant;
+    //if (!UA.isBlink() && !UA.isWebkit() && !UA.isGecko()) {
+    //    alert('Not supported browser. Use Chrome/Safari/FireFox.');
+    //    return;
+    //}
 
     VisModelJS.ShapeFactory.SetFactory(new PegShapeFactory());
 
@@ -161,7 +171,7 @@ window.onload = function(){
 
     panel.InitializeView(TopNode);
     panel.Draw();
-    panel.Viewport.SetCamera(TopNode.centerGx, TopNode.centerGy + panel.Viewport.GetPageHeight() / 3, 1);
+    panel.Viewport.camera.setPositionAndScale(TopNode.centerGx, TopNode.centerGy + panel.Viewport.pageHeight / 3, 1);
     panel.addEventListener("dblclick", event => {
         var node = (<VisModelJS.NodeViewEvent>event).node;
         node.folded = !node.folded;

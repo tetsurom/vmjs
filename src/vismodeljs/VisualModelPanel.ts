@@ -191,13 +191,13 @@ module VisModelJS {
                     break;
                 case 187: /*+*/
                     if (Event.shiftKey) {
-                        this.Viewport.SetCameraScale(this.Viewport.GetCameraScale() + 0.1)
+                        this.Viewport.camera.scale += 0.1;
                     }
                     Event.preventDefault();
                     break;
                 case 189: /*-*/
                     if (Event.shiftKey) {
-                        this.Viewport.SetCameraScale(this.Viewport.GetCameraScale() - 0.1)
+                        this.Viewport.camera.scale -= 0.1;
                     }
                     Event.preventDefault();
                     break;
@@ -240,7 +240,7 @@ module VisModelJS {
                 var NextNode: TreeNodeView = Node.constructor == String ? this.ViewMap[Node] : Node;
                 if (NextNode != null) {
                     this.ChangeFocusedLabel(NextNode.label);
-                    this.Viewport.MoveTo(NextNode.centerGx, NextNode.centerGy, this.Viewport.GetCameraScale(), 50);
+                    this.Viewport.MoveTo(NextNode.centerGx, NextNode.centerGy, this.Viewport.camera.scale, 50);
                 }
             }
         }
@@ -277,8 +277,8 @@ module VisModelJS {
             }
             var NearestNode: TreeNodeView = null;
             var CurrentMinimumDistanceSquere = Infinity;
-            var CX = CenterNode ? CenterNode.centerGx : this.Viewport.GetCameraGX();
-            var CY = CenterNode ? CenterNode.centerGy : this.Viewport.GetCameraGY();
+            var CX = CenterNode ? CenterNode.centerGx : this.Viewport.camera.gx;
+            var CY = CenterNode ? CenterNode.centerGy : this.Viewport.camera.gy;
             this.TopNodeView.traverseVisibleNode((Node: TreeNodeView) => {
                 var DX = Node.centerGx - CX;
                 var DY = Node.centerGy - CY;
@@ -376,17 +376,17 @@ module VisModelJS {
             TreeNodeView.setGlobalPositionCacheEnabled(true);
             var FoldingAnimationCallbacks: Function[] = [];
 
-            var ScreenRect = this.Viewport.GetPageRectInGxGy();
+            var PageRect = this.Viewport.pageRectInGxGy;
             if (FixedNode) {
                 FixedNodeDX = FixedNode.gx - FixedNodeGX0;
                 FixedNodeDY = FixedNode.gy - FixedNodeGY0;
                 if (FixedNodeDX > 0) {
-                    ScreenRect.width += FixedNodeDX;
+                    PageRect.width += FixedNodeDX;
                 } else {
-                    ScreenRect.width -= FixedNodeDX;
-                    ScreenRect.x += FixedNodeDX;
+                    PageRect.width -= FixedNodeDX;
+                    PageRect.x += FixedNodeDX;
                 }
-                var Scale = this.Viewport.GetCameraScale();
+                var Scale = this.Viewport.camera.scale;
                 var Task = this.Viewport.CreateMoveTaskFunction(FixedNodeDX, FixedNodeDY, Scale, Duration);
                 if (Task) {
                     FoldingAnimationCallbacks.push(Task);
@@ -398,16 +398,15 @@ module VisModelJS {
             }
 
             var t2 = Utils.getTime();
-            TargetView.updateNodePosition(FoldingAnimationCallbacks, Duration, ScreenRect);
+            TargetView.updateNodePosition(FoldingAnimationCallbacks, Duration, PageRect);
             TargetView.clearAnimationCache();
             var t3 = Utils.getTime();
             //console.log("Update: " + (t3 - t2));
             this.FoldingAnimationTask.startMany(Duration, FoldingAnimationCallbacks);
 
             var Shape = TargetView.shape;
-            this.Viewport.CameraLimitRect = new Rect(Shape.GetTreeLeftLocalX() - 100, -100, Shape.GetTreeWidth() + 200, Shape.GetTreeHeight() + 200);
+            this.Viewport.camera.limitRect = new Rect(Shape.GetTreeLeftLocalX() - 100, -100, Shape.GetTreeWidth() + 200, Shape.GetTreeHeight() + 200);
 
-            var PageRect = this.Viewport.GetPageRectInGxGy();
             this.TopNodeView.traverseVisibleNode((Node: TreeNodeView) => {
                 if (Node.isInRect(PageRect)) {
                     this.OnScreenNodeMap[Node.label] = Node;
@@ -447,7 +446,7 @@ module VisModelJS {
 
         private UpdateHiddenNodeList() {
             TreeNodeView.setGlobalPositionCacheEnabled(true);
-            var PageRect = this.Viewport.GetPageRectInGxGy();
+            var PageRect = this.Viewport.pageRectInGxGy;
             var UpdateArrow = (Node: TreeNodeView) => {
                 if (Node.parent) {
                     var Arrow = Node.shape.ArrowPath;
