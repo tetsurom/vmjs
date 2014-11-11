@@ -27,7 +27,7 @@ class PegNodeShape extends VisModelJS.Shape {
             }
             if (this.NodeView.content) {
                 var p = document.createElement("p");
-                p.innerText = this.NodeView.content.trim();
+                p.textContent = this.NodeView.content.trim();
                 div.appendChild(p);
             }
             this.UpdateHtmlClass();
@@ -147,7 +147,7 @@ var createNodeViewFromP4DJson = function () {
 window.onload = function(){
 
     // IE dose not have Function#name. but it is needed for imprement 'instanceof'
-    if (!(<any>Function.prototype).name) {
+    if (!("name" in Function.prototype)) {
         Object.defineProperty(Function.prototype, "name", {
             get: function () {
                 return this.toString().replace(/^\s*function\s*([^\(]*)[\S\s]+$/im, '$1');
@@ -156,7 +156,7 @@ window.onload = function(){
     }
 
     //Browser detection
-    //var UA = VisModelJS.Utils.UserAgant;
+    var UA = VisModelJS.Utils.UserAgant;
     //if (!UA.isBlink() && !UA.isWebkit() && !UA.isGecko()) {
     //    alert('Not supported browser. Use Chrome/Safari/FireFox.');
     //    return;
@@ -175,6 +175,14 @@ window.onload = function(){
     panel.addEventListener("dblclick", event => {
         var node = (<VisModelJS.NodeViewEvent>event).node;
         node.folded = !node.folded;
-        panel.Draw(panel.TopNodeView.label, 300, node);
+        if (UA.isTrident()) {
+            for (var k in panel.ViewMap) {
+                var Node = panel.ViewMap[k];
+                Node.shape.Content = null;
+            }
+            panel.Draw(panel.TopNodeView.label, 0, node);
+        } else {
+            panel.Draw(panel.TopNodeView.label, 300, node);
+        }
     });
 };

@@ -15,7 +15,7 @@ module VisModelJS {
         private Render(ThisNode: TreeNodeView, DivFrag: DocumentFragment, SvgNodeFrag: DocumentFragment, SvgConnectionFrag: DocumentFragment): void {
             if (ThisNode.visible) {
                 ThisNode.shape.PrepareContent();
-                ThisNode.render(DivFrag, SvgNodeFrag, SvgConnectionFrag);
+                ThisNode.shape.Render(DivFrag, SvgNodeFrag, SvgConnectionFrag);
                 if (!ThisNode.folded) {
                     ThisNode.forEachVisibleAllSubNodes((SubNode: TreeNodeView) => {
                         this.Render(SubNode, DivFrag, SvgNodeFrag, SvgConnectionFrag);

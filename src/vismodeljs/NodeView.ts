@@ -170,13 +170,6 @@ module VisModelJS {
         }
 
         /**
-            Append content elements of this node to layer fragments.
-        */
-        render(htmlLayerFlagment: DocumentFragment, svgLayerFlagment: DocumentFragment, svgConnectorFlagment: DocumentFragment): void {
-            this._shape.Render(htmlLayerFlagment, svgLayerFlagment, svgConnectorFlagment);
-        }
-
-        /**
             Try to reuse shape.
         */
         copyFlagsFromOldView(oldView: TreeNodeView): void {
