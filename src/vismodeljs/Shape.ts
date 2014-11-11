@@ -500,7 +500,7 @@ module VisModelJS {
             }
         }
 
-        AddColorStyle(ColorStyleCode: string): void {
+        addColorStyle(ColorStyleCode: string): void {
             if (ColorStyleCode) {
                 if (this.ColorStyles.indexOf(ColorStyleCode) < 0) {
                     this.ColorStyles.push(ColorStyleCode);
@@ -511,7 +511,7 @@ module VisModelJS {
             }
         }
 
-        RemoveColorStyle(ColorStyleCode: string): void {
+        removeColorStyle(ColorStyleCode: string): void {
             if (ColorStyleCode && ColorStyleCode != ColorStyle.Default) {
                 var Index = this.ColorStyles.indexOf(ColorStyleCode);
                 if (Index > 0) {

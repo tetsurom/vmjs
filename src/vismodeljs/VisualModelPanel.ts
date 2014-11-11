@@ -240,7 +240,7 @@ module VisModelJS {
                 var NextNode: TreeNodeView = Node.constructor == String ? this.ViewMap[Node] : Node;
                 if (NextNode != null) {
                     this.ChangeFocusedLabel(NextNode.label);
-                    this.Viewport.MoveTo(NextNode.GetCenterGX(), NextNode.GetCenterGY(), this.Viewport.GetCameraScale(), 50);
+                    this.Viewport.MoveTo(NextNode.centerGx, NextNode.centerGy, this.Viewport.GetCameraScale(), 50);
                 }
             }
         }
@@ -277,11 +277,11 @@ module VisModelJS {
             }
             var NearestNode: TreeNodeView = null;
             var CurrentMinimumDistanceSquere = Infinity;
-            var CX = CenterNode ? CenterNode.GetCenterGX() : this.Viewport.GetCameraGX();
-            var CY = CenterNode ? CenterNode.GetCenterGY() : this.Viewport.GetCameraGY();
+            var CX = CenterNode ? CenterNode.centerGx : this.Viewport.GetCameraGX();
+            var CY = CenterNode ? CenterNode.centerGy : this.Viewport.GetCameraGY();
             this.TopNodeView.traverseVisibleNode((Node: TreeNodeView) => {
-                var DX = Node.GetCenterGX() - CX;
-                var DY = Node.GetCenterGY() - CY;
+                var DX = Node.centerGx - CX;
+                var DY = Node.centerGy - CY;
                 var DDotR = DX * RightLimitVectorX + DY * RightLimitVectorY;
                 var DDotL = DX * LeftLimitVectorX + DY * LeftLimitVectorY;
                 if (DDotR > 0 && DDotL > 0) {
@@ -304,19 +304,19 @@ module VisModelJS {
             if (Label == null) {
                 var oldNodeView = this.ViewMap[this.FocusedLabel];
                 if (oldNodeView != null) {
-                    oldNodeView.RemoveColorStyle(ColorStyle.Highlight);
+                    oldNodeView.shape.removeColorStyle(ColorStyle.Highlight);
                 }
                 this.FocusedLabel = null;
                 return;
             }
-            var NodeView = this.ViewMap[Label];
-            if (NodeView != null) {
+            var nodeview = this.ViewMap[Label];
+            if (nodeview != null) {
                 var oldNodeView = this.ViewMap[this.FocusedLabel];
                 if (oldNodeView != null) {
-                    oldNodeView.RemoveColorStyle(ColorStyle.Highlight);
+                    oldNodeView.shape.removeColorStyle(ColorStyle.Highlight);
                 }
                 this.FocusedLabel = Label;
-                NodeView.AddColorStyle(ColorStyle.Highlight);
+                nodeview.shape.addColorStyle(ColorStyle.Highlight);
             }
         }
 
@@ -359,8 +359,8 @@ module VisModelJS {
             var FixedNodeDX: number;
             var FixedNodeDY: number;
             if (FixedNode) {
-                FixedNodeGX0 = FixedNode.GetGX();
-                FixedNodeGY0 = FixedNode.GetGY();
+                FixedNodeGX0 = FixedNode.gx;
+                FixedNodeGY0 = FixedNode.gy;
             }
 
             this.LayoutEngine.DoLayout(this, TargetView);
@@ -378,8 +378,8 @@ module VisModelJS {
 
             var ScreenRect = this.Viewport.GetPageRectInGxGy();
             if (FixedNode) {
-                FixedNodeDX = FixedNode.GetGX() - FixedNodeGX0;
-                FixedNodeDY = FixedNode.GetGY() - FixedNodeGY0;
+                FixedNodeDX = FixedNode.gx - FixedNodeGX0;
+                FixedNodeDY = FixedNode.gy - FixedNodeGY0;
                 if (FixedNodeDX > 0) {
                     ScreenRect.width += FixedNodeDX;
                 } else {
@@ -404,7 +404,7 @@ module VisModelJS {
             //console.log("Update: " + (t3 - t2));
             this.FoldingAnimationTask.startMany(Duration, FoldingAnimationCallbacks);
 
-            var Shape = TargetView.GetShape();
+            var Shape = TargetView.shape;
             this.Viewport.CameraLimitRect = new Rect(Shape.GetTreeLeftLocalX() - 100, -100, Shape.GetTreeWidth() + 200, Shape.GetTreeHeight() + 200);
 
             var PageRect = this.Viewport.GetPageRectInGxGy();
@@ -413,8 +413,8 @@ module VisModelJS {
                     this.OnScreenNodeMap[Node.label] = Node;
                 } else {
                     this.HiddenNodeMap[Node.label] = Node;
-                    this.HiddenNodeBuffer.appendChild(Node._shape.Content);
-                    this.HiddenNodeBuffer.appendChild(Node._shape.ShapeGroup);
+                    this.HiddenNodeBuffer.appendChild(Node.shape.Content);
+                    this.HiddenNodeBuffer.appendChild(Node.shape.ShapeGroup);
                 }
             });
 
@@ -429,7 +429,7 @@ module VisModelJS {
         public ForceAppendAllOutOfScreenNode() {
             var UpdateArrow = (Node: TreeNodeView) => {
                 if (Node.parent) {
-                    var Arrow = Node._shape.ArrowPath;
+                    var Arrow = Node.shape.ArrowPath;
                     if (Arrow.parentNode != this.HiddenNodeBuffer) {
                         this.HiddenNodeBuffer.appendChild(Arrow);
                     }
@@ -439,8 +439,8 @@ module VisModelJS {
                 var Node = this.HiddenNodeMap[<string>Label];
                 delete this.HiddenNodeMap[<string>Label];
                 this.OnScreenNodeMap[<string>Label] = Node;
-                this.ContentLayer.appendChild(Node._shape.Content);
-                this.SVGLayerNodeGroup.appendChild(Node._shape.ShapeGroup);
+                this.ContentLayer.appendChild(Node.shape.Content);
+                this.SVGLayerNodeGroup.appendChild(Node.shape.ShapeGroup);
                 UpdateArrow(Node);
             }
         }
@@ -450,7 +450,7 @@ module VisModelJS {
             var PageRect = this.Viewport.GetPageRectInGxGy();
             var UpdateArrow = (Node: TreeNodeView) => {
                 if (Node.parent) {
-                    var Arrow = Node._shape.ArrowPath;
+                    var Arrow = Node.shape.ArrowPath;
                     if (Node.isConnectorInRect(PageRect)) {
                         if (Arrow.parentNode != this.SVGLayerConnectorGroup) {
                             this.SVGLayerConnectorGroup.appendChild(Arrow);
@@ -467,8 +467,8 @@ module VisModelJS {
                 if (!Node.isInRect(PageRect)) {
                     delete this.OnScreenNodeMap[<string>Label];
                     this.HiddenNodeMap[<string>Label] = Node;
-                    this.HiddenNodeBuffer.appendChild(Node._shape.Content);
-                    this.HiddenNodeBuffer.appendChild(Node._shape.ShapeGroup);
+                    this.HiddenNodeBuffer.appendChild(Node.shape.Content);
+                    this.HiddenNodeBuffer.appendChild(Node.shape.ShapeGroup);
                 }
                 UpdateArrow(Node);
             }
@@ -477,8 +477,8 @@ module VisModelJS {
                 if (Node.isInRect(PageRect)) {
                     delete this.HiddenNodeMap[<string>Label];
                     this.OnScreenNodeMap[<string>Label] = Node;
-                    this.ContentLayer.appendChild(Node._shape.Content);
-                    this.SVGLayerNodeGroup.appendChild(Node._shape.ShapeGroup);
+                    this.ContentLayer.appendChild(Node.shape.Content);
+                    this.SVGLayerNodeGroup.appendChild(Node.shape.ShapeGroup);
                 }
                 UpdateArrow(Node);
             }
