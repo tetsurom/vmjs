@@ -326,7 +326,7 @@ module VisModelJS {
                     this.scrollManager.onMouseWheel(e, this);
                 }
             };
-            this.panel.RootElement.addEventListener('mousewheel', OnWheel);
+            this.panel.RootElement.addEventListener('wheel', OnWheel);
         }
 
         get camera() {
