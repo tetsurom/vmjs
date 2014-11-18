@@ -14,8 +14,8 @@ module VisModelJS {
 
         private Render(ThisNode: TreeNodeView, DivFrag: DocumentFragment, SvgNodeFrag: DocumentFragment, SvgConnectionFrag: DocumentFragment): void {
             if (ThisNode.visible) {
-                ThisNode.shape.PrepareContent();
-                ThisNode.shape.Render(DivFrag, SvgNodeFrag, SvgConnectionFrag);
+                ThisNode.shape.prepareContent();
+                ThisNode.shape.render(DivFrag, SvgNodeFrag, SvgConnectionFrag);
                 if (!ThisNode.folded) {
                     ThisNode.forEachVisibleAllSubNodes((SubNode: TreeNodeView) => {
                         this.Render(SubNode, DivFrag, SvgNodeFrag, SvgConnectionFrag);
@@ -48,8 +48,8 @@ module VisModelJS {
 
         private PrepareNodeSize(ThisNode: TreeNodeView): void {
             var Shape = ThisNode.shape;
-            Shape.GetNodeWidth();
-            Shape.GetNodeHeight();
+            Shape.nodeWidth;
+            Shape.nodeHeight;
             if (ThisNode.folded) {
                 return;
             }
@@ -71,33 +71,33 @@ module VisModelJS {
             var Shape = ThisNode.shape;
             if (!ThisNode.shouldReLayout) {
                 ThisNode.traverseVisibleNode((Node: TreeNodeView) => {
-                    Node.shape.FitSizeToContent();
+                    Node.shape.fitSizeToContent();
                 });
                 return;
             }
             ThisNode.shouldReLayout = false;
-            Shape.FitSizeToContent();
+            Shape.fitSizeToContent();
             var TreeLeftX = 0;
-            var ThisNodeWidth = Shape.GetNodeWidth();
+            var ThisNodeWidth = Shape.nodeWidth;
             var TreeRightX = ThisNodeWidth;
-            var TreeHeight = Shape.GetNodeHeight();
+            var TreeHeight = Shape.nodeHeight;
             if (ThisNode.folded) {
-                Shape.SetHeadRect(0, 0, ThisNodeWidth, TreeHeight);
-                Shape.SetTreeRect(0, 0, ThisNodeWidth, TreeHeight);
+                Shape.setHeadRect(0, 0, ThisNodeWidth, TreeHeight);
+                Shape.setTreeRect(0, 0, ThisNodeWidth, TreeHeight);
                 return;
             }
             if (ThisNode.leftNodes != null) {
                 var LeftNodesWidth = 0;
                 var LeftNodesHeight = -VerticalTreeLayoutEngine.SideNodeVerticalMargin;
                 ThisNode.forEachVisibleLeftNodes((SubNode: TreeNodeView) => {
-                    SubNode.shape.FitSizeToContent();
+                    SubNode.shape.fitSizeToContent();
                     LeftNodesHeight += VerticalTreeLayoutEngine.SideNodeVerticalMargin;
-                    SubNode.relativeX = -(SubNode.shape.GetNodeWidth() + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
+                    SubNode.relativeX = -(SubNode.shape.nodeWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
                     SubNode.relativeY = LeftNodesHeight;
-                    LeftNodesWidth = Math.max(LeftNodesWidth, SubNode.shape.GetNodeWidth());
-                    LeftNodesHeight += SubNode.shape.GetNodeHeight();
+                    LeftNodesWidth = Math.max(LeftNodesWidth, SubNode.shape.nodeWidth);
+                    LeftNodesHeight += SubNode.shape.nodeHeight;
                 });
-                var LeftShift = (ThisNode.shape.GetNodeHeight() - LeftNodesHeight) / 2;
+                var LeftShift = (ThisNode.shape.nodeHeight - LeftNodesHeight) / 2;
                 if (LeftShift > 0) {
                     ThisNode.forEachVisibleLeftNodes((SubNode: TreeNodeView) => {
                         SubNode.relativeY += LeftShift;
@@ -112,14 +112,14 @@ module VisModelJS {
                 var RightNodesWidth = 0;
                 var RightNodesHeight = -VerticalTreeLayoutEngine.SideNodeVerticalMargin;
                 ThisNode.forEachVisibleRightNodes((SubNode: TreeNodeView) => {
-                    SubNode.shape.FitSizeToContent();
+                    SubNode.shape.fitSizeToContent();
                     RightNodesHeight += VerticalTreeLayoutEngine.SideNodeVerticalMargin;
                     SubNode.relativeX = (ThisNodeWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
                     SubNode.relativeY = RightNodesHeight;
-                    RightNodesWidth = Math.max(RightNodesWidth, SubNode.shape.GetNodeWidth());
-                    RightNodesHeight += SubNode.shape.GetNodeHeight();
+                    RightNodesWidth = Math.max(RightNodesWidth, SubNode.shape.nodeWidth);
+                    RightNodesHeight += SubNode.shape.nodeHeight;
                 });
-                var RightShift = (ThisNode.shape.GetNodeHeight() - RightNodesHeight) / 2;
+                var RightShift = (ThisNode.shape.nodeHeight - RightNodesHeight) / 2;
                 if (RightShift > 0) {
                     ThisNode.forEachVisibleRightNodes((SubNode: TreeNodeView) => {
                         SubNode.relativeY += RightShift;
@@ -133,7 +133,7 @@ module VisModelJS {
 
             var HeadRightX = TreeRightX;
             var HeadWidth = TreeRightX - TreeLeftX;
-            Shape.SetHeadRect(TreeLeftX, 0, HeadWidth, TreeHeight);
+            Shape.setHeadRect(TreeLeftX, 0, HeadWidth, TreeHeight);
             TreeHeight += VerticalTreeLayoutEngine.ChildrenVerticalMargin;
 
             var ChildrenTopWidth = 0;
@@ -148,12 +148,12 @@ module VisModelJS {
                 ThisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
                     VisibleChildrenCount++;
                     this.Layout(SubNode);
-                    var ChildTreeWidth = SubNode.shape.GetTreeWidth();
-                    var ChildHeadWidth = SubNode.folded ? SubNode.shape.GetNodeWidth() : SubNode.shape.GetHeadWidth();
-                    var ChildHeadHeight = SubNode.folded ? SubNode.shape.GetNodeHeight() : SubNode.shape.GetHeadHeight();
-                    var ChildHeadLeftSideMargin = SubNode.shape.GetHeadLeftLocalX() - SubNode.shape.GetTreeLeftLocalX();
+                    var ChildTreeWidth = SubNode.shape.treeWidth;
+                    var ChildHeadWidth = SubNode.folded ? SubNode.shape.nodeWidth : SubNode.shape.headWidth;
+                    var ChildHeadHeight = SubNode.folded ? SubNode.shape.nodeHeight : SubNode.shape.headHeight;
+                    var ChildHeadLeftSideMargin = SubNode.shape.headLeftLocalX - SubNode.shape.treeLeftLocalX;
                     var ChildHeadRightX = ChildHeadLeftSideMargin + ChildHeadWidth;
-                    var ChildTreeHeight = SubNode.shape.GetTreeHeight();
+                    var ChildTreeHeight = SubNode.shape.treeHeight;
                     var HMargin = VerticalTreeLayoutEngine.ChildrenHorizontalMargin;
 
                     var IsUndeveloped = SubNode.childNodes == null || SubNode.childNodes.length == 0;
@@ -195,7 +195,7 @@ module VisModelJS {
                         FoldedNodeRun = [];
                         FormarUnfoldedChildHeight = ChildHeadHeight;
                     }
-                    SubNode.relativeX += -SubNode.shape.GetTreeLeftLocalX();
+                    SubNode.relativeX += -SubNode.shape.treeLeftLocalX;
                     SubNode.relativeY = TreeHeight;
 
                     IsPreviousChildFolded = IsFoldedLike;
@@ -208,11 +208,11 @@ module VisModelJS {
                 
                 if (VisibleChildrenCount == 1) {
                     ThisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
-                        ShiftX = -SubNode.shape.GetTreeLeftLocalX();
+                        ShiftX = -SubNode.shape.treeLeftLocalX;
                         if (!SubNode.hasSideNode || SubNode.folded) {
                             var ShiftY = 0;
-                            var SubNodeHeight = SubNode.shape.GetNodeHeight();
-                            var ThisHeight = ThisNode.shape.GetNodeHeight();
+                            var SubNodeHeight = SubNode.shape.nodeHeight;
+                            var ThisHeight = ThisNode.shape.nodeHeight;
                             var VMargin = VerticalTreeLayoutEngine.ChildrenVerticalMargin;
                             if (!SubNode.hasChildren || ThisHeight + VMargin * 2 + SubNodeHeight > TreeHeight) {
                                 ShiftY = TreeHeight - (ThisHeight + VMargin);
@@ -232,7 +232,7 @@ module VisModelJS {
                 TreeHeight += ChildrenHeight;
                 TreeRightX = Math.max(TreeLeftX + ChildrenWidth, HeadRightX);
             }
-            Shape.SetTreeRect(TreeLeftX, 0, TreeRightX - TreeLeftX, TreeHeight);
+            Shape.setTreeRect(TreeLeftX, 0, TreeRightX - TreeLeftX, TreeHeight);
             //console.log(ThisNode.Label + ": " + (<any>ThisNode.Shape).TreeBoundingBox.toString());
         }
 

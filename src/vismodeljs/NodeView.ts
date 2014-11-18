@@ -87,17 +87,17 @@ module VisModelJS {
 
         get shape(): Shape {
             if (this._shape == null) {
-                this._shape = ShapeFactory.CreateShape(this);
+                this._shape = ShapeFactory.createShape(this);
             }
             return this._shape;
         }
 
         set shape(value: Shape) {
             if (this._shape) {
-                this._shape.NodeView = null;
+                this._shape.nodeView = null;
             }
             if (value) {
-                value.NodeView = this;
+                value.nodeView = this;
             }
             this._shape = value;
         }
@@ -132,11 +132,11 @@ module VisModelJS {
 
         // Global center X/Y: Node center position
         get centerGx(): number {
-            return this.gx + this._shape.GetNodeWidth() * 0.5;
+            return this.gx + this._shape.nodeWidth * 0.5;
         }
 
         get centerGy(): number {
-            return this.gy + this._shape.GetNodeHeight() * 0.5;
+            return this.gy + this._shape.nodeHeight * 0.5;
         }
 
         // For memorization
@@ -187,7 +187,7 @@ module VisModelJS {
         }
 
         private getConnectorPosition(dir: Direction, globalPosition: Point): Point {
-            var P = this._shape.GetConnectorPosition(dir);
+            var P = this._shape.getConnectorPosition(dir);
             P.x += globalPosition.x;
             P.y += globalPosition.y;
             return P;
@@ -203,11 +203,11 @@ module VisModelJS {
             }
             var updateSubNode = (SubNode: TreeNodeView) => {
                 var base = unfoldBaseNode;
-                if (!base && SubNode._shape.WillFadein()) {
+                if (!base && SubNode._shape.willFadein) {
                     base = this;
                 }
                 if (base && duration > 0) {
-                    SubNode._shape.SetFadeinBasePosition(base._shape.GetGXCache(), base._shape.GetGYCache());
+                    SubNode._shape.setFadeinBasePosition(base._shape.gxCache, base._shape.gyCache);
                     SubNode.updateNodePosition(animationCallbacks, duration, screenRect, base);
                 } else {
                     SubNode.updateNodePosition(animationCallbacks, duration, screenRect);
@@ -215,7 +215,7 @@ module VisModelJS {
             }
 
             var gp = this.globalPosition;
-            this._shape.MoveTo(animationCallbacks, gp.x, gp.y, duration, screenRect);
+            this._shape.moveTo(animationCallbacks, gp.x, gp.y, duration, screenRect);
 
             var directions = [Direction.Bottom, Direction.Right, Direction.Left];
             var subNodeTypes = [this.childNodes, this.rightNodes, this.leftNodes];
@@ -225,7 +225,7 @@ module VisModelJS {
                 this.forEachVisibleSubNode(subNodeTypes[i], (SubNode: TreeNodeView) => {
                     var p2 = SubNode.getConnectorPosition(arrowGoalDirection, SubNode.globalPosition);
                     updateSubNode(SubNode);
-                    SubNode._shape.MoveArrowTo(animationCallbacks, p1, p2, directions[i], duration, screenRect);
+                    SubNode._shape.moveArrowTo(animationCallbacks, p1, p2, directions[i], duration, screenRect);
                     SubNode.parentDirection = reverseDirection(directions[i]);
                 });
             }
@@ -298,7 +298,7 @@ module VisModelJS {
         */
         clearAnimationCache(force?: boolean): void {
             if (force || !this.visible) {
-                this.shape.ClearAnimationCache();
+                this.shape.clearAnimationCache();
             }
             if (force || this._folded) {
                 this.forEachAllSubNodes((SubNode: TreeNodeView) => {
@@ -322,8 +322,8 @@ module VisModelJS {
 
         isInRect(target: Rect): boolean {
             // While animation playing, cached position(visible position) != this.position(logical position)
-            var gxCached = this._shape.GetGXCache();
-            var gyCached = this._shape.GetGYCache();
+            var gyCached = this._shape.gyCache;
+            var gxCached = this._shape.gxCache;
             var pos: Point;
             if (gxCached != null && gyCached != null) {
                 pos = new Point(gxCached, gyCached);
@@ -333,8 +333,8 @@ module VisModelJS {
             if (pos.x > target.x + target.width || pos.y > target.y + target.height) {
                 return false;
             }
-            pos.x += this._shape.GetNodeWidth();
-            pos.y += this._shape.GetNodeHeight();
+            pos.x += this._shape.nodeWidth;
+            pos.y += this._shape.nodeHeight;
             if (pos.x < target.x || pos.y < target.y) {
                 return false;
             }
@@ -347,9 +347,9 @@ module VisModelJS {
             }
             var pa: Point;
             var pb: Point;
-            if (this._shape.GetGXCache() != null && this._shape.GetGYCache() != null) {
-                pa = this._shape.GetArrowP1Cache();
-                pb = this._shape.GetArrowP2Cache();
+            if (this._shape.gxCache != null && this._shape.gyCache != null) {
+                pa = this._shape.arrowP1Cache;
+                pb = this._shape.arrowP2Cache;
             } else {
                 pa = this.getConnectorPosition(this.parentDirection, this.globalPosition);
                 pb = this.parent.getConnectorPosition(reverseDirection(this.parentDirection), this.parent.globalPosition);

@@ -13,21 +13,21 @@ class PegNodeShape extends VisModelJS.Shape {
     })();
 
     PrepareHTMLContent(): void {
-        if (this.Content == null) {
+        if (this.content == null) {
             var div = document.createElement("div");
-            this.Content = div;
+            this.content = div;
 
-            div.id = this.NodeView.label;
-            div.setAttribute("data-nodelabel", this.NodeView.label);
+            div.id = this.nodeView.label;
+            div.setAttribute("data-nodelabel", this.nodeView.label);
 
-            if (this.NodeView.label) {
+            if (this.nodeView.label) {
                 var h4 = document.createElement("h4");
-                h4.textContent = "#" + this.NodeView.label.split("#")[1];
+                h4.textContent = "#" + this.nodeView.label.split("#")[1];
                 div.appendChild(h4);
             }
-            if (this.NodeView.content) {
+            if (this.nodeView.content) {
                 var p = document.createElement("p");
-                p.textContent = this.NodeView.content.trim();
+                p.textContent = this.nodeView.content.trim();
                 div.appendChild(p);
             }
             this.UpdateHtmlClass();
@@ -35,25 +35,25 @@ class PegNodeShape extends VisModelJS.Shape {
     }
 
     PrepareSVGContent(): void {
-        super.PrepareSVGContent();
+        super.prepareSVGContent();
         this.BodyRect = VisModelJS.Utils.createSVGElement("rect");
-        this.ShapeGroup.appendChild(this.BodyRect);
-        if (this.NodeView.folded) {
-            this.ShapeGroup.appendChild(PegNodeShape.ModuleSymbolMaster.cloneNode());
+        this.shapeGroup.appendChild(this.BodyRect);
+        if (this.nodeView.folded) {
+            this.shapeGroup.appendChild(PegNodeShape.ModuleSymbolMaster.cloneNode());
         }
     }
 
     FitSizeToContent(): void {
-        this.BodyRect.setAttribute("width", this.GetNodeWidth().toString());
-        this.BodyRect.setAttribute("height", this.GetNodeHeight().toString());
-        if (this.NodeView.childNodes == null && !this.NodeView.folded) {
-            var x = (this.GetNodeWidth() / 2).toString();
-            var y = (this.GetNodeHeight() + 20).toString();
+        this.BodyRect.setAttribute("width", this.nodeWidth.toString());
+        this.BodyRect.setAttribute("height", this.nodeHeight.toString());
+        if (this.nodeView.childNodes == null && !this.nodeView.folded) {
+            var x = (this.nodeWidth / 2).toString();
+            var y = (this.nodeHeight + 20).toString();
         }
     }
 
     UpdateHtmlClass() {
-        this.Content.className = "node node-peg";
+        this.content.className = "node node-peg";
     }
 }
 
@@ -162,7 +162,7 @@ window.onload = function(){
     //    return;
     //}
 
-    VisModelJS.ShapeFactory.SetFactory(new PegShapeFactory());
+    VisModelJS.ShapeFactory.setFactory(new PegShapeFactory());
 
     var root = <HTMLDivElement>document.getElementById("content");
     var panel = new VisModelJS.VisualModelPanel(root);
@@ -177,7 +177,7 @@ window.onload = function(){
         node.folded = !node.folded;
         if (UA.isTrident()) {
             for (var k in panel.ViewMap) {
-                panel.ViewMap[k].shape.Content = null;
+                panel.ViewMap[k].shape.content = null;
             }
             panel.Draw(panel.TopNodeView.label, 0, node);
         } else {

@@ -25,90 +25,79 @@
 module VisModelJS {
 
     export class ShapeSizePreFetcher {
-        Queue: Shape[] = [];
-        TimerHandle: number = 0;
-        DummyDiv: HTMLDivElement = document.createElement("div");
+        private queue: Shape[] = [];
+        private timerHandle: number = 0;
+        private dummyDiv: HTMLDivElement = document.createElement("div");
 
         constructor() {
-            this.DummyDiv.style.position = "absolute";
-            this.DummyDiv.style.top = "1000%";
-            document.body.appendChild(this.DummyDiv);
-            var LastQueueSize = 0;
-            //for debug
-            setInterval(() => {
-                if (!LastQueueSize) {
-                    LastQueueSize = this.Queue.length;
-                }
-                if (LastQueueSize - this.Queue.length) {
-                    console.log("size prefetch: " + this.Queue.length + " nodes left. " + (1000 / (LastQueueSize - this.Queue.length)) + "ms/node");
-                }
-                LastQueueSize = this.Queue.length;
-            }, 1000);
+            this.dummyDiv.style.position = "absolute";
+            this.dummyDiv.style.top = "1000%";
+            document.body.appendChild(this.dummyDiv);
         }
 
-        private Start() {
-            this.TimerHandle = setInterval(() => {
+        private start() {
+            this.timerHandle = setInterval(() => {
                 var StartTime = Utils.getTime();
-                while (this.Queue.length > 0 && Utils.getTime() - StartTime < 16) {
-                    var Shape = this.Queue.shift();
-                    if (Shape.NodeView && !Shape.IsSizeCached()) {
-                        Shape.PrepareContent();
-                        if (!Shape.Content.parentElement) {
-                            this.DummyDiv.appendChild(Shape.Content);
+                while (this.queue.length > 0 && Utils.getTime() - StartTime < 16) {
+                    var shape = this.queue.shift();
+                    if (shape.nodeView && !shape.isSizeCached) {
+                        shape.prepareContent();
+                        if (!shape.content.parentElement) {
+                            this.dummyDiv.appendChild(shape.content);
                         }
-                        Shape.GetNodeWidth();
-                        Shape.GetHeadHeight();
-                        this.DummyDiv.removeChild(Shape.Content);
+                        shape.nodeWidth;
+                        shape.headHeight;
+                        this.dummyDiv.removeChild(shape.content);
                     }
                 }
-                if (this.Queue.length == 0) {
-                    clearInterval(this.TimerHandle);
-                    this.TimerHandle = 0;
+                if (this.queue.length == 0) {
+                    clearInterval(this.timerHandle);
+                    this.timerHandle = 0;
                 }
             }, 20);
         }
 
-        AddShape(Shape: Shape) {
-            this.Queue.push(Shape);
-            if (!this.TimerHandle) {
-                this.Start();
+        addShape(shape: Shape) {
+            this.queue.push(shape);
+            if (!this.timerHandle) {
+                this.start();
             }
         }
     }
 
     export class ShapeFactory {
-        private static Factory: ShapeFactory;
+        private static factory: ShapeFactory;
 
-        static SetFactory(Factory: ShapeFactory) {
-            ShapeFactory.Factory = Factory;
+        static setFactory(factory: ShapeFactory) {
+            ShapeFactory.factory = factory;
         }
 
-        static CreateShape(Node: TreeNodeView): Shape {
-            return ShapeFactory.Factory.CreateShape(Node);
+        static createShape(node: TreeNodeView): Shape {
+            return ShapeFactory.factory.createShape(node);
         }
 
-        CreateShape(Node: TreeNodeView): Shape {
+        createShape(node: TreeNodeView): Shape {
             throw Error("Not impremented");
             return null;
         }
     }
 
     export class Shape {
-        ShapeGroup: SVGGElement;
-        ArrowPath: SVGPathElement;
-        Content: HTMLElement;
-        private ColorStyles: string[] = [ColorStyle.Default];
-        private NodeWidthCache: number;
-        private NodeHeightCache: number;
-        private HeadBoundingBox: Rect; // Head is the node and Left and Right.
-        private TreeBoundingBox: Rect; // Tree is Head and Children
+        shapeGroup: SVGGElement;
+        arrowPath: SVGPathElement;
+        content: HTMLElement;
+        private colorStyles: string[] = [ColorStyle.Default];
+        private nodeWidthCache: number;
+        private nodeHeightCache: number;
+        private headBoundingBox: Rect; // Head is the node and Left and Right.
+        private treeBoundingBox: Rect; // Tree is Head and Children
 
-        private static AsyncSizePrefetcher: ShapeSizePreFetcher;
-        private static NodeHeightCache: { [index: string]: number } = {};
+        private static asyncSizePrefetcher: ShapeSizePreFetcher;
+        private static nodeHeightCache: { [index: string]: number } = {};
 
-        private static DefaultWidth = 150;
+        private static defaultWidth = 150;
 
-        private static ArrowPathMaster: SVGPathElement = (() => {
+        private static arrowPathMaster: SVGPathElement = (() => {
             var Master = Utils.createSVGElement("path");
             Master.setAttribute("marker-end", "url(#Triangle-black)");
             Master.setAttribute("fill", "none");
@@ -118,577 +107,417 @@ module VisModelJS {
         })();
 
 
-        constructor(public NodeView: TreeNodeView) {
-            this.Content = null;
-            this.NodeWidthCache = Shape.DefaultWidth;
-            this.NodeHeightCache = 0;
-            this.HeadBoundingBox = new Rect(0, 0, 0, 0);
-            this.TreeBoundingBox = new Rect(0, 0, 0, 0);
-            if (Shape.AsyncSizePrefetcher == null) {
-                Shape.AsyncSizePrefetcher = new ShapeSizePreFetcher();
+        constructor(public nodeView: TreeNodeView) {
+            this.content = null;
+            this.nodeWidthCache = Shape.defaultWidth;
+            this.nodeHeightCache = 0;
+            this.headBoundingBox = new Rect(0, 0, 0, 0);
+            this.treeBoundingBox = new Rect(0, 0, 0, 0);
+            if (Shape.asyncSizePrefetcher == null) {
+                Shape.asyncSizePrefetcher = new ShapeSizePreFetcher();
             }
-            Shape.AsyncSizePrefetcher.AddShape(this);
+            Shape.asyncSizePrefetcher.addShape(this);
         }
 
-        IsSizeCached(): boolean {
-            return this.NodeHeightCache != 0 && this.NodeWidthCache != 0
+        get isSizeCached(): boolean {
+            return this.nodeHeightCache != 0 && this.nodeWidthCache != 0
         }
 
-        private static CreateArrowPath(): SVGPathElement {
-            return <SVGPathElement>Shape.ArrowPathMaster.cloneNode();
+        private static createArrowPath(): SVGPathElement {
+            return <SVGPathElement>Shape.arrowPathMaster.cloneNode();
         }
 
-        SetTreeRect(LocalX: number, LocalY: number, Width: number, Height: number): void {
-            this.SetTreeUpperLeft(LocalX, LocalY);
-            this.SetTreeSize(Width, Height);
+        setTreeRect(localX: number, localY: number, width: number, height: number): void {
+            this.setTreeUpperLeft(localX, localY);
+            this.setTreeSize(width, height);
         }
 
-        SetHeadRect(LocalX: number, LocalY: number, Width: number, Height: number): void {
-            this.SetHeadUpperLeft(LocalX, LocalY);
-            this.SetHeadSize(Width, Height);
+        setHeadRect(localX: number, localY: number, width: number, height: number): void {
+            this.setHeadUpperLeft(localX, localY);
+            this.setHeadSize(width, height);
         }
 
-        SetTreeSize(Width: number, Height: number): void {
-            this.TreeBoundingBox.width = Width;
-            this.TreeBoundingBox.height = Height;
+        setTreeSize(width: number, height: number): void {
+            this.treeBoundingBox.width = width;
+            this.treeBoundingBox.height = height;
         }
 
-        SetHeadSize(Width: number, Height: number): void {
-            this.HeadBoundingBox.width = Width;
-            this.HeadBoundingBox.height = Height;
+        setHeadSize(width: number, height: number): void {
+            this.headBoundingBox.width = width;
+            this.headBoundingBox.height = height;
         }
 
-        GetNodeWidth(): number {
-            return this.NodeWidthCache;
+        get nodeWidth(): number {
+            return this.nodeWidthCache;
         }
 
-        GetNodeHeight(): number {
-            if (this.NodeHeightCache == 0) {
-                var Cached = Shape.NodeHeightCache[this.Content.innerHTML];
+        get nodeHeight(): number {
+            if (this.nodeHeightCache == 0) {
+                var Cached = Shape.nodeHeightCache[this.content.innerHTML];
                 if (Cached) {
-                    this.NodeHeightCache = Cached;
+                    this.nodeHeightCache = Cached;
                 } else {
-                    Shape.NodeHeightCache[this.Content.innerHTML] = this.NodeHeightCache = this.Content.clientHeight;
+                    Shape.nodeHeightCache[this.content.innerHTML] = this.nodeHeightCache = this.content.clientHeight;
                 }
             }
-            return this.NodeHeightCache;
+            return this.nodeHeightCache;
         }
 
-        GetTreeWidth(): number {
-            if (this.TreeBoundingBox.width == 0) {
-                this.TreeBoundingBox.width = 150; //FIXME
+        get treeWidth(): number {
+            if (this.treeBoundingBox.width == 0) {
+                this.treeBoundingBox.width = 150; //FIXME
             }
-            return this.TreeBoundingBox.width;
+            return this.treeBoundingBox.width;
         }
 
-        GetTreeHeight(): number {
-            if (this.TreeBoundingBox.height == 0) {
-                this.TreeBoundingBox.height = 100; //FIXME
+        get treeHeight(): number {
+            if (this.treeBoundingBox.height == 0) {
+                this.treeBoundingBox.height = 100; //FIXME
             }
-            return this.TreeBoundingBox.height;
+            return this.treeBoundingBox.height;
         }
 
-        GetHeadWidth(): number {
-            if (this.HeadBoundingBox.width == 0) {
-                this.HeadBoundingBox.width = 150; //FIXME
+        get headWidth(): number {
+            if (this.headBoundingBox.width == 0) {
+                this.headBoundingBox.width = 150; //FIXME
             }
-            return this.HeadBoundingBox.width;
+            return this.headBoundingBox.width;
         }
 
-        GetHeadHeight(): number {
-            if (this.HeadBoundingBox.height == 0) {
-                this.HeadBoundingBox.height = 100; //FIXME
+        get headHeight(): number {
+            if (this.headBoundingBox.height == 0) {
+                this.headBoundingBox.height = 100; //FIXME
             }
-            return this.HeadBoundingBox.height;
+            return this.headBoundingBox.height;
         }
 
-        GetTreeLeftLocalX(): number {
-            return this.TreeBoundingBox.x;
+        get treeLeftLocalX(): number {
+            return this.treeBoundingBox.x;
         }
 
-        GetHeadLeftLocalX(): number {
-            return this.HeadBoundingBox.x;
+        get headLeftLocalX(): number {
+            return this.headBoundingBox.x;
         }
 
-        SetTreeUpperLeft(LocalX: number, LocalY: number): void {
-            this.TreeBoundingBox.x = LocalX;
-            this.TreeBoundingBox.y = LocalY;
+        setTreeUpperLeft(localX: number, localY: number): void {
+            this.treeBoundingBox.x = localX;
+            this.treeBoundingBox.y = localY;
         }
 
-        SetHeadUpperLeft(LocalX: number, LocalY: number): void {
-            this.HeadBoundingBox.x = LocalX;
-            this.HeadBoundingBox.y = LocalY;
+        setHeadUpperLeft(localX: number, localY: number): void {
+            this.headBoundingBox.x = localX;
+            this.headBoundingBox.y = localY;
         }
 
-        UpdateHtmlClass() {
-            this.Content.className = "node";
+        updateHtmlClass() {
+            this.content.className = "node";
         }
 
-        private FormatNewLine(doc: string) {
+        private formatNewLine(doc: string) {
             return doc.replace(/\r\n|\n|\r/g, '<br>');
         }
 
-        PrepareHTMLContent(): void {
-            if (this.Content == null) {
+        prepareHTMLContent(): void {
+            if (this.content == null) {
                 var div = document.createElement("div");
-                this.Content = div;
+                this.content = div;
 
-                div.id = this.NodeView.label;
-                div.setAttribute("data-nodelabel", this.NodeView.label);
+                div.id = this.nodeView.label;
+                div.setAttribute("data-nodelabel", this.nodeView.label);
 
-                if (this.NodeView.label) {
+                if (this.nodeView.label) {
                     var h4 = document.createElement("h4");
-                    h4.textContent = this.NodeView.label;
+                    h4.textContent = this.nodeView.label;
                     div.appendChild(h4);
                 }
-                if (this.NodeView.content) {
+                if (this.nodeView.content) {
                     var p = document.createElement("p");
-                    p.innerText = this.NodeView.content.trim();
+                    p.innerText = this.nodeView.content.trim();
                     div.appendChild(p);
                 }
-                this.UpdateHtmlClass();
+                this.updateHtmlClass();
             }
         }
 
-        PrepareContent() {
-            this.PrepareHTMLContent();
-            this.PrepareSVGContent();
+        prepareContent() {
+            this.prepareHTMLContent();
+            this.prepareSVGContent();
         }
 
-        Render(HtmlContentFragment: DocumentFragment, SvgNodeFragment: DocumentFragment, SvgConnectionFragment: DocumentFragment): void {
-            SvgNodeFragment.appendChild(this.ShapeGroup);
-            if (this.ArrowPath != null && this.NodeView.parent != null) {
-                SvgConnectionFragment.appendChild(this.ArrowPath);
+        render(htmlContentFragment: DocumentFragment, svgNodeFragment: DocumentFragment, svgConnectionFragment: DocumentFragment): void {
+            svgNodeFragment.appendChild(this.shapeGroup);
+            if (this.arrowPath != null && this.nodeView.parent != null) {
+                svgConnectionFragment.appendChild(this.arrowPath);
             }
-            HtmlContentFragment.appendChild(this.Content);
+            htmlContentFragment.appendChild(this.content);
         }
 
-        FitSizeToContent(): void {
+        fitSizeToContent(): void {
         }
 
-        private willFadein = false;
-        private GXCache = null;
-        private GYCache = null;
+        private _willFadein = false;
+        private _gxCache = null;
+        private _gyCache = null;
 
-        private RemoveAnimateElement(Animate: SVGElement) {
-            if (Animate) {
-                var Parent = Animate.parentNode;
-                if (Parent) {
-                    Parent.removeChild(Animate);
-                }
-            }
-        }
-
-        SetPosition(x: number, y: number): void {
-            if (this.NodeView.visible) {
-                var div = this.Content;
+        setPosition(x: number, y: number): void {
+            if (this.nodeView.visible) {
+                var div = this.content;
                 if (div != null) {
                     div.style.left = x + "px";
                     div.style.top = y + "px";
                 }
-                var mat = this.ShapeGroup.transform.baseVal.getItem(0).matrix;
+                var mat = this.shapeGroup.transform.baseVal.getItem(0).matrix;
                 mat.e = x;
                 mat.f = y;
             }
-            this.GXCache = x;
-            this.GYCache = y;
+            this._gxCache = x;
+            this._gyCache = y;
         }
 
-        private SetOpacity(Opacity: number) {
-            this.Content.style.opacity = Opacity.toString();
-            this.ShapeGroup.style.opacity = Opacity.toString();
+        private set opacity(value: number) {
+            this.content.style.opacity = value.toString();
+            this.shapeGroup.style.opacity = value.toString();
         }
 
-        private Fadein(AnimationCallbacks: Function[], Duration: number): void {
-            var V = 1 / Duration;
-            var Opacity = 0;
-            AnimationCallbacks.push((deltaT: number) => {
-                Opacity += V * deltaT;
-                this.SetOpacity(Opacity);
-                this.SetArrowOpacity(Opacity);
+        private fadein(animationCallbacks: Function[], duration: number): void {
+            var V = 1 / duration;
+            var opacity = 0;
+            animationCallbacks.push((deltaT: number) => {
+                opacity += V * deltaT;
+                this.opacity = this.arrowOpacity = opacity;
             });
         }
 
         static __Debug_Animation_SkippedNodeCount;
         static __Debug_Animation_TotalNodeCount;
 
-        public MoveTo(AnimationCallbacks: Function[], x: number, y: number, Duration: number, ScreenRect?: Rect): void {
-            if (Duration <= 0) {
-                this.SetPosition(x, y);
+        public moveTo(animationCallbacks: Function[], x: number, y: number, duration: number, screenRect?: Rect): void {
+            if (duration <= 0) {
+                this.setPosition(x, y);
                 return;
             }
 
-            if (this.WillFadein()) {
-                if (ScreenRect && (y + this.GetNodeHeight() < ScreenRect.y || y > ScreenRect.y + ScreenRect.height)) {
-                    this.SetPosition(x, y);
-                    this.willFadein = false;
+            if (this.willFadein) {
+                if (screenRect && (y + this.nodeHeight < screenRect.y || y > screenRect.y + screenRect.height)) {
+                    this.setPosition(x, y);
+                    this._willFadein = false;
                     return;
                 }
-                this.Fadein(AnimationCallbacks, Duration);
-                this.willFadein = false;
-                if (this.GXCache == null || this.GYCache == null) {
-                    this.SetPosition(x, y);
+                this.fadein(animationCallbacks, duration);
+                this._willFadein = false;
+                if (this._gxCache == null || this._gyCache == null) {
+                    this.setPosition(x, y);
                     return;
                 }
             }
 
-            if (ScreenRect) {
+            if (screenRect) {
                 Shape.__Debug_Animation_TotalNodeCount++;
-                if (this.GXCache + this.GetNodeWidth() < ScreenRect.x || this.GXCache > ScreenRect.x + ScreenRect.width) {
-                    if (x + this.GetNodeWidth() < ScreenRect.x || x > ScreenRect.x + ScreenRect.width) {
-                        this.SetPosition(x, y);
+                if (this._gxCache + this.nodeWidth < screenRect.x || this._gxCache > screenRect.x + screenRect.width) {
+                    if (x + this.nodeWidth < screenRect.x || x > screenRect.x + screenRect.width) {
+                        this.setPosition(x, y);
                         return;
                     }
                 }
-                if (this.GYCache + this.GetNodeHeight() < ScreenRect.y || this.GYCache > ScreenRect.y + ScreenRect.height) {
-                    this.SetPosition(x, y);
+                if (this._gyCache + this.nodeHeight < screenRect.y || this._gyCache > screenRect.y + screenRect.height) {
+                    this.setPosition(x, y);
                     return;
                 }
             }
 
-            var VX = (x - this.GXCache) / Duration;
-            var VY = (y - this.GYCache) / Duration;
+            var VX = (x - this._gxCache) / duration;
+            var VY = (y - this._gyCache) / duration;
             
-            AnimationCallbacks.push((deltaT: number) => this.SetPosition(this.GXCache + VX * deltaT, this.GYCache + VY * deltaT));
+            animationCallbacks.push((deltaT: number) => this.setPosition(this._gxCache + VX * deltaT, this._gyCache + VY * deltaT));
         }
 
-        SetFadeinBasePosition(StartGX: number, StartGY: number): void {
-            this.willFadein = true;
-            this.GXCache = StartGX;
-            this.GYCache = StartGY;
-            this.ArrowP1Cache = this.ArrowP2Cache = new Point(StartGX + this.GetNodeWidth() * 0.5, StartGY + this.GetNodeHeight() * 0.5);
+        setFadeinBasePosition(startGX: number, startGY: number): void {
+            this._willFadein = true;
+            this._gxCache = startGX;
+            this._gyCache = startGY;
+            this._arrowP1Cache = this._arrowP2Cache = new Point(startGX + this.nodeWidth * 0.5, startGY + this.nodeHeight * 0.5);
         }
 
-        GetGXCache(): number {
-            return this.GXCache;
+        get gxCache(): number {
+            return this._gxCache;
         }
 
-        GetGYCache(): number {
-            return this.GYCache;
+        get gyCache(): number {
+            return this._gyCache;
         }
 
-        WillFadein(): boolean {
-            return this.willFadein || this.GXCache == null || this.GYCache == null;
+        get willFadein(): boolean {
+            return this._willFadein || this._gxCache == null || this._gyCache == null;
         }
 
-        ClearAnimationCache(): void {
-            this.GXCache = null;
-            this.GYCache = null;
+        clearAnimationCache(): void {
+            this._gxCache = null;
+            this._gyCache = null;
         }
 
-        private ArrowStart: SVGPathSegMovetoAbs;
-        private ArrowCurve: SVGPathSegCurvetoCubicAbs;
+        private arrowStart: SVGPathSegMovetoAbs;
+        private arrowCurve: SVGPathSegCurvetoCubicAbs;
 
-        PrepareSVGContent(): void {
-            this.ShapeGroup = Utils.createSVGElement("g");
-            this.ShapeGroup.setAttribute("transform", "translate(0,0)");
-            this.ShapeGroup.setAttribute("class", this.ColorStyles.join(" "));
-            this.ArrowPath = Shape.CreateArrowPath();
-            this.ArrowStart = <SVGPathSegMovetoAbs>this.ArrowPath.pathSegList.getItem(0);
-            this.ArrowCurve = <SVGPathSegCurvetoCubicAbs>this.ArrowPath.pathSegList.getItem(1);
+        prepareSVGContent(): void {
+            this.shapeGroup = Utils.createSVGElement("g");
+            this.shapeGroup.setAttribute("transform", "translate(0,0)");
+            this.shapeGroup.setAttribute("class", this.colorStyles.join(" "));
+            this.arrowPath = Shape.createArrowPath();
+            this.arrowStart = <SVGPathSegMovetoAbs>this.arrowPath.pathSegList.getItem(0);
+            this.arrowCurve = <SVGPathSegCurvetoCubicAbs>this.arrowPath.pathSegList.getItem(1);
         }
 
-        private ArrowP1Cache: Point;
-        private ArrowP2Cache: Point;
+        private _arrowP1Cache: Point;
+        private _arrowP2Cache: Point;
 
-        GetArrowP1Cache(): Point {
-            return this.ArrowP1Cache;
+        get arrowP1Cache(): Point {
+            return this._arrowP1Cache;
         }
 
-        GetArrowP2Cache(): Point {
-            return this.ArrowP2Cache;
+        get arrowP2Cache(): Point {
+            return this._arrowP2Cache;
         }
 
-        SetArrowPosition(P1: Point, P2: Point, Dir: Direction) {
-            var start = this.ArrowStart;
-            var curve = this.ArrowCurve;
-            start.x = P1.x;
-            start.y = P1.y;
-            curve.x = P2.x;
-            curve.y = P2.y;
-            if (Dir == Direction.Bottom || Dir == Direction.Top) {
-                var DiffX = Math.abs(P1.x - P2.x);
-                curve.x1 = (9 * P1.x + P2.x) / 10;
-                curve.y1 = P2.y;
-                curve.x2 = (9 * P2.x + P1.x) / 10;
-                curve.y2 = P1.y;
-                if (DiffX > 300) {
-                    curve.x1 = P1.x - 10 * (P1.x - P2.x < 0 ? -1 : 1);
-                    curve.x2 = P2.x + 10 * (P1.x - P2.x < 0 ? -1 : 1);
+        setArrowPosition(p1: Point, p2: Point, dir: Direction) {
+            var start = this.arrowStart;
+            var curve = this.arrowCurve;
+            start.x = p1.x;
+            start.y = p1.y;
+            curve.x = p2.x;
+            curve.y = p2.y;
+            if (dir == Direction.Bottom || dir == Direction.Top) {
+                var dx = Math.abs(p1.x - p2.x);
+                curve.x1 = (9 * p1.x + p2.x) / 10;
+                curve.y1 = p2.y;
+                curve.x2 = (9 * p2.x + p1.x) / 10;
+                curve.y2 = p1.y;
+                if (dx > 300) {
+                    curve.x1 = p1.x - 10 * (p1.x - p2.x < 0 ? -1 : 1);
+                    curve.x2 = p2.x + 10 * (p1.x - p2.x < 0 ? -1 : 1);
                 }
-                if (DiffX < 50) {
-                    curve.y1 = curve.y2 = (P1.y + P2.y) * 0.5;
+                if (dx < 50) {
+                    curve.y1 = curve.y2 = (p1.y + p2.y) * 0.5;
                 }
             } else {
-                curve.x1 = (P1.x + P2.x) / 2;
-                curve.y1 = (9 * P1.y + P2.y) / 10;
-                curve.x2 = (P1.x + P2.x) / 2;
-                curve.y2 = (9 * P2.y + P1.y) / 10;
+                curve.x1 = (p1.x + p2.x) / 2;
+                curve.y1 = (9 * p1.y + p2.y) / 10;
+                curve.x2 = (p1.x + p2.x) / 2;
+                curve.y2 = (9 * p2.y + p1.y) / 10;
             }
-            this.ArrowP1Cache = P1;
-            this.ArrowP2Cache = P2;
+            this._arrowP1Cache = p1;
+            this._arrowP2Cache = p2;
         }
 
-        private SetArrowOpacity(Opacity: number) {
-            this.ArrowPath.style.opacity = Opacity.toString();
+        private set arrowOpacity(opacity: number) {
+            this.arrowPath.style.opacity = opacity.toString();
         }
 
-        MoveArrowTo(AnimationCallbacks: Function[], P1: Point, P2: Point, Dir: Direction, Duration: number, ScreenRect?: Rect) {
-            if (Duration <= 0) {
-                this.SetArrowPosition(P1, P2, Dir);
+        moveArrowTo(animationCallbacks: Function[], p1: Point, p2: Point, dir: Direction, duration: number, screenRect?: Rect) {
+            if (duration <= 0) {
+                this.setArrowPosition(p1, p2, dir);
                 return;
             }
-            if (ScreenRect) {
-                var R0 = this.ArrowP1Cache.x < this.ArrowP2Cache.x ? this.ArrowP2Cache.x : this.ArrowP1Cache.x; 
-                var L0 = this.ArrowP1Cache.x < this.ArrowP2Cache.x ? this.ArrowP1Cache.x : this.ArrowP2Cache.x; 
-                if (R0 < ScreenRect.x || L0 > ScreenRect.x + ScreenRect.width) {
-                    var R1 = P1.x < P2.x ? P2.x : P1.x; 
-                    var L1 = P1.x < P2.x ? P1.x : P2.x; 
-                    if (R1  < ScreenRect.x || L1 > ScreenRect.x + ScreenRect.width) {
-                        this.SetArrowPosition(P1, P2, Dir);
+            if (screenRect) {
+                var R0 = this._arrowP1Cache.x < this._arrowP2Cache.x ? this._arrowP2Cache.x : this._arrowP1Cache.x; 
+                var L0 = this._arrowP1Cache.x < this._arrowP2Cache.x ? this._arrowP1Cache.x : this._arrowP2Cache.x; 
+                if (R0 < screenRect.x || L0 > screenRect.x + screenRect.width) {
+                    var R1 = p1.x < p2.x ? p2.x : p1.x; 
+                    var L1 = p1.x < p2.x ? p1.x : p2.x; 
+                    if (R1  < screenRect.x || L1 > screenRect.x + screenRect.width) {
+                        this.setArrowPosition(p1, p2, dir);
                         return;
                     }
                 }
-                if (this.ArrowP2Cache.y < ScreenRect.y || this.ArrowP1Cache.y > ScreenRect.y + ScreenRect.height) {
-                    this.SetArrowPosition(P1, P2, Dir);
+                if (this._arrowP2Cache.y < screenRect.y || this._arrowP1Cache.y > screenRect.y + screenRect.height) {
+                    this.setArrowPosition(p1, p2, dir);
                     return;
                 }
             }
 
-            if (this.ArrowP1Cache == this.ArrowP2Cache && ScreenRect && (P2.y + this.GetNodeHeight() < ScreenRect.y || P1.y > ScreenRect.y + ScreenRect.height)) {
-                this.SetArrowPosition(P1, P2, Dir);
+            if (this._arrowP1Cache == this._arrowP2Cache && screenRect && (p2.y + this.nodeHeight < screenRect.y || p1.y > screenRect.y + screenRect.height)) {
+                this.setArrowPosition(p1, p2, dir);
                 return;
             }
 
-            var P1VX = (P1.x - this.ArrowP1Cache.x) / Duration;
-            var P1VY = (P1.y - this.ArrowP1Cache.y) / Duration;
-            var P2VX = (P2.x - this.ArrowP2Cache.x) / Duration;
-            var P2VY = (P2.y - this.ArrowP2Cache.y) / Duration;
+            var P1VX = (p1.x - this._arrowP1Cache.x) / duration;
+            var P1VY = (p1.y - this._arrowP1Cache.y) / duration;
+            var P2VX = (p2.x - this._arrowP2Cache.x) / duration;
+            var P2VY = (p2.y - this._arrowP2Cache.y) / duration;
 
-            var CurrentP1 = this.ArrowP1Cache.clone();
-            var CurrentP2 = this.ArrowP2Cache.clone();
+            var CurrentP1 = this._arrowP1Cache.clone();
+            var CurrentP2 = this._arrowP2Cache.clone();
 
-            AnimationCallbacks.push((deltaT: number) => {
+            animationCallbacks.push((deltaT: number) => {
                 CurrentP1.x += P1VX * deltaT;
                 CurrentP1.y += P1VY * deltaT;
                 CurrentP2.x += P2VX * deltaT;
                 CurrentP2.y += P2VY * deltaT;
-                this.SetArrowPosition(CurrentP1, CurrentP2, Dir);
+                this.setArrowPosition(CurrentP1, CurrentP2, dir);
             });
         }
 
-        SetArrowColorWhite(IsWhite: boolean) {
-            if (IsWhite) {
-                this.ArrowPath.setAttribute("marker-end", "url(#Triangle-white)");
+        setArrowColorWhite(isWhite: boolean) {
+            if (isWhite) {
+                this.arrowPath.setAttribute("marker-end", "url(#Triangle-white)");
             } else {
-                this.ArrowPath.setAttribute("marker-end", "url(#Triangle-black)");
+                this.arrowPath.setAttribute("marker-end", "url(#Triangle-black)");
             }
         }
 
-        GetConnectorPosition(Dir: Direction): Point {
-            switch (Dir) {
+        getConnectorPosition(dir: Direction): Point {
+            switch (dir) {
                 case Direction.Right:
-                    return new Point(this.GetNodeWidth(), this.GetNodeHeight() / 2);
+                    return new Point(this.nodeWidth, this.nodeHeight / 2);
                 case Direction.Left:
-                    return new Point(0, this.GetNodeHeight() / 2);
+                    return new Point(0, this.nodeHeight / 2);
                 case Direction.Top:
-                    return new Point(this.GetNodeWidth() / 2, 0);
+                    return new Point(this.nodeWidth / 2, 0);
                 case Direction.Bottom:
-                    return new Point(this.GetNodeWidth() / 2, this.GetNodeHeight());
+                    return new Point(this.nodeWidth / 2, this.nodeHeight);
                 default:
                     return new Point(0, 0);
             }
         }
 
-        addColorStyle(ColorStyleCode: string): void {
-            if (ColorStyleCode) {
-                if (this.ColorStyles.indexOf(ColorStyleCode) < 0) {
-                    this.ColorStyles.push(ColorStyleCode);
+        addColorStyle(colorStyleCode: string): void {
+            if (colorStyleCode) {
+                if (this.colorStyles.indexOf(colorStyleCode) < 0) {
+                    this.colorStyles.push(colorStyleCode);
                 }
-                if (this.ShapeGroup) {
-                    this.ShapeGroup.setAttribute("class", this.ColorStyles.join(" "));
+                if (this.shapeGroup) {
+                    this.shapeGroup.setAttribute("class", this.colorStyles.join(" "));
                 }
             }
         }
 
         removeColorStyle(ColorStyleCode: string): void {
             if (ColorStyleCode && ColorStyleCode != ColorStyle.Default) {
-                var Index = this.ColorStyles.indexOf(ColorStyleCode);
+                var Index = this.colorStyles.indexOf(ColorStyleCode);
                 if (Index > 0) {
-                    this.ColorStyles.splice(Index, 1);
+                    this.colorStyles.splice(Index, 1);
                 }
-                if (this.ShapeGroup) {
-                    this.ShapeGroup.setAttribute("class", this.ColorStyles.join(" "));
+                if (this.shapeGroup) {
+                    this.shapeGroup.setAttribute("class", this.colorStyles.join(" "));
                 }
             }
         }
 
         getColorStyle(): string[] {
-            return this.ColorStyles;
+            return this.colorStyles;
         }
 
-        setColorStyle(Styles: string[]): void {
-            this.ColorStyles = Styles;
-            if (this.ColorStyles.indexOf(ColorStyle.Default) < 0) {
-                this.ColorStyles.push(ColorStyle.Default);
+        setColorStyle(styles: string[]): void {
+            this.colorStyles = styles;
+            if (this.colorStyles.indexOf(ColorStyle.Default) < 0) {
+                this.colorStyles.push(ColorStyle.Default);
             }
         }
 
-        ClearColorStyle(): void {
-            this.ColorStyles = [ColorStyle.Default];
-            if (this.ShapeGroup) {
-                this.ShapeGroup.setAttribute("class", this.ColorStyles.join(" "));
+        clearColorStyle(): void {
+            this.colorStyles = [ColorStyle.Default];
+            if (this.shapeGroup) {
+                this.shapeGroup.setAttribute("class", this.colorStyles.join(" "));
             }
         }
     }
-    /*
-    export class GSNGoalShape extends Shape {
-        BodyRect: SVGRectElement;
-        ModuleRect: SVGRectElement;
-        UndevelopedSymbol: SVGPolygonElement;
-
-        private static ModuleSymbolMaster: SVGRectElement = (() => {
-            var Master = Utils.CreateSVGElement("rect");
-            Master.setAttribute("width", "80px");
-            Master.setAttribute("height", "13px");
-            Master.setAttribute("y", "-13px");
-            return Master;
-        })();
-
-        private static UndevelopedSymbolMaster: SVGPolygonElement = (() => {
-            var Master = Utils.CreateSVGElement("polygon");
-            Master.setAttribute("points", "0 -20 -20 0 0 20 20 0");
-            return Master;
-        })();
-
-
-        PrerenderSVGContent(manager: PluginManager): void {
-            super.PrepareSVGContent(manager);
-            this.BodyRect = Utils.CreateSVGElement("rect");
-            this.ShapeGroup.appendChild(this.BodyRect);
-            if (this.NodeView.IsFolded()) {
-                this.ShapeGroup.appendChild(GSNGoalShape.ModuleSymbolMaster.cloneNode());
-            }
-            if (this.NodeView.Children == null && !this.NodeView.IsFolded()) {
-                this.UndevelopedSymbol = <SVGPolygonElement>GSNGoalShape.UndevelopedSymbolMaster.cloneNode();
-                this.ShapeGroup.appendChild(this.UndevelopedSymbol);
-            }
-        }
-
-        FitSizeToContent(): void {
-            this.BodyRect.setAttribute("width", this.GetNodeWidth().toString());
-            this.BodyRect.setAttribute("height", this.GetNodeHeight().toString());
-            if (this.NodeView.Children == null && !this.NodeView.IsFolded()) {
-                var x = (this.GetNodeWidth() / 2).toString();
-                var y = (this.GetNodeHeight() + 20).toString();
-                this.UndevelopedSymbol.setAttribute("transform", "translate(" + x + "," + y + ")");
-                this.UndevelopedSymbol.setAttribute("y", y + "px");
-            }
-        }
-
-        UpdateHtmlClass() {
-            this.Content.className = "node node-goal";
-        }
-    }
-
-    export class GSNContextShape extends Shape {
-        BodyRect: SVGRectElement;
-
-        PrerenderSVGContent(manager: PluginManager): void {
-            super.PrepareSVGContent(manager);
-            this.BodyRect = Utils.CreateSVGElement("rect");
-            this.ArrowPath.setAttribute("marker-end", "url(#Triangle-white)");
-            this.BodyRect.setAttribute("rx", "10");
-            this.BodyRect.setAttribute("ry", "10");
-            this.ShapeGroup.appendChild(this.BodyRect);
-        }
-
-        FitSizeToContent(): void {
-            this.BodyRect.setAttribute("width", this.GetNodeWidth().toString());
-            this.BodyRect.setAttribute("height", this.GetNodeHeight().toString());
-        }
-
-        UpdateHtmlClass() {
-            this.Content.className = "node node-context";
-        }
-    }
-
-    export class GSNStrategyShape extends Shape {
-        BodyPolygon: SVGPolygonElement;
-        delta: number = 20;
-
-        PrerenderSVGContent(manager: PluginManager): void {
-            super.PrepareSVGContent(manager);
-            this.BodyPolygon = Utils.CreateSVGElement("polygon");
-            this.ShapeGroup.appendChild(this.BodyPolygon);
-        }
-
-        FitSizeToContent(): void {
-            var w: number = this.GetNodeWidth();
-            var h: number = this.GetNodeHeight();
-            this.BodyPolygon.setAttribute("points", "" + this.delta + ",0 " + w + ",0 " + (w - this.delta) + "," + h + " 0," + h);
-        }
-
-        UpdateHtmlClass() {
-            this.Content.className = "node node-strategy";
-        }
-
-        GetConnectorPosition(Dir: Direction): Point {
-            switch (Dir) {
-                case Direction.Right:
-                    return new Point(this.GetNodeWidth() - this.delta / 2, this.GetNodeHeight() / 2);
-                case Direction.Left:
-                    return new Point(this.delta / 2, this.GetNodeHeight() / 2);
-                case Direction.Top:
-                    return new Point(this.GetNodeWidth() / 2, 0);
-                case Direction.Bottom:
-                    return new Point(this.GetNodeWidth() / 2, this.GetNodeHeight());
-            }
-        }
-    }
-
-    export class GSNEvidenceShape extends Shape {
-        private BodyEllipse: SVGEllipseElement;
-        private ClientHeight: number;
-
-        PrerenderSVGContent(manager: PluginManager): void {
-            super.PrepareSVGContent(manager);
-            this.BodyEllipse = Utils.CreateSVGElement("ellipse");
-            this.ShapeGroup.appendChild(this.BodyEllipse);
-        }
-
-        FitSizeToContent(): void {
-            this.BodyEllipse.setAttribute("cx", (this.GetNodeWidth() / 2).toString());
-            this.BodyEllipse.setAttribute("cy", (this.GetNodeHeight() / 2).toString());
-            this.BodyEllipse.setAttribute("rx", (this.GetNodeWidth() / 2).toString());
-            this.BodyEllipse.setAttribute("ry", (this.GetNodeHeight() / 2).toString());
-        }
-
-        UpdateHtmlClass() {
-            this.Content.className = "node node-evidence";
-        }
-    }
-
-    export class DCaseEvidenceShape extends Shape {
-        private BodyEllipse: SVGEllipseElement;
-        private ClientHeight: number;
-
-        PrerenderSVGContent(manager: PluginManager): void {
-            super.PrepareSVGContent(manager);
-            this.BodyEllipse = Utils.CreateSVGElement("ellipse");
-            this.ShapeGroup.appendChild(this.BodyEllipse);
-        }
-
-        FitSizeToContent(): void {
-            this.BodyEllipse.setAttribute("cx", (this.GetNodeWidth() / 2).toString());
-            this.BodyEllipse.setAttribute("cy", (this.GetNodeHeight() / 2).toString());
-            this.BodyEllipse.setAttribute("rx", (this.GetNodeWidth() / 2).toString());
-            this.BodyEllipse.setAttribute("ry", (this.GetNodeHeight() / 2).toString());
-        }
-
-        UpdateHtmlClass() {
-            this.Content.className = "node node-evidence";
-        }
-    }
-*/
 }
