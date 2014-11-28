@@ -312,12 +312,12 @@ module VisModelJS {
             this.updatePageSize();
             this.updatePageRect();
             this._camera.setCenterPagePosition(this.areaCenterX, this.areaCenterY);
-            Utils.setTransformOriginToElement(this.panel.ContentLayer, "left top");
+            Utils.setTransformOriginToElement(this.panel.contentLayer, "left top");
             this.updateAttr();
             var onPointer = (e: PointerEvent) => { if (this.isPointerEnabled) { this.scrollManager.onPointerEvent(e, this); } };
 
             ["trackstart", "trackend", "track"].forEach((name) => {
-                PolymerGestures.addEventListener(this.panel.RootElement, name, onPointer);
+                PolymerGestures.addEventListener(this.panel.rootElement, name, onPointer);
             });
 
             var OnWheel = (e: WheelEvent) => {
@@ -326,7 +326,7 @@ module VisModelJS {
                     this.scrollManager.onMouseWheel(e, this);
                 }
             };
-            this.panel.RootElement.addEventListener('wheel', OnWheel);
+            this.panel.rootElement.addEventListener('wheel', OnWheel);
         }
 
         get camera() {
@@ -457,7 +457,7 @@ module VisModelJS {
         }
 
         private updatePageSize() {
-            var rootRect = this.panel.RootElement.getBoundingClientRect();
+            var rootRect = this.panel.rootElement.getBoundingClientRect();
             this._areaWidth = rootRect.width;
             this._areaHeight = rootRect.height;
         }
@@ -487,7 +487,7 @@ module VisModelJS {
                 var attr: string = ViewportManager.createTranformAttr(offsetX, offsetY, this.scale);
                 var style: string = ViewportManager.createTransformStyle(offsetX, offsetY, this.scale);
                 this.panel.SVGLayer.setAttribute("transform", attr);
-                Utils.setTransformToElement(this.panel.ContentLayer, style);
+                Utils.setTransformToElement(this.panel.contentLayer, style);
             }
             var event = new VisModelJS.VisModelEvent();
             event.type = "cameramove";

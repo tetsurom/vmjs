@@ -114,19 +114,19 @@ module VisModelJS {
             Callback(rest, i);
         }
 
-        export function RemoveFirstLine(Text: string): string {
+        export function removeFirstLine(Text: string): string {
             return Text.replace(/^.+$(\r\n|\r|\n)?/m, "");
         }
 
-        export function GenerateUID(): number {
+        export function generateUID(): number {
             return Math.floor(Math.random() * 2147483647);
         }
 
-        export function GenerateRandomString(): string {
-            return GenerateUID().toString(36);
+        export function generateRandomString(): string {
+            return generateUID().toString(36);
         }
 
-        export function UpdateHash(hash: string) {
+        export function updateHash(hash: string) {
             if (!hash) hash = '';
             window.location.hash = hash;
         }

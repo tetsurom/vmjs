@@ -1,10 +1,10 @@
 ﻿var Debug = <any>{};
 
 class PegNodeShape extends VisModelJS.Shape {
-    BodyRect: SVGRectElement;
-    ModuleRect: SVGRectElement;
+    bodyRect: SVGRectElement;
+    moduleRect: SVGRectElement;
 
-    private static ModuleSymbolMaster: SVGRectElement = (() => {
+    private static moduleSymbolMaster: SVGRectElement = (() => {
         var Master = VisModelJS.Utils.createSVGElement("rect");
         Master.setAttribute("width", "80px");
         Master.setAttribute("height", "13px");
@@ -12,7 +12,7 @@ class PegNodeShape extends VisModelJS.Shape {
         return Master;
     })();
 
-    PrepareHTMLContent(): void {
+    prepareHTMLContent(): void {
         if (this.content == null) {
             var div = document.createElement("div");
             this.content = div;
@@ -30,36 +30,36 @@ class PegNodeShape extends VisModelJS.Shape {
                 p.textContent = this.nodeView.content.trim();
                 div.appendChild(p);
             }
-            this.UpdateHtmlClass();
+            this.updateHtmlClass();
         }
     }
 
-    PrepareSVGContent(): void {
+    prepareSVGContent(): void {
         super.prepareSVGContent();
-        this.BodyRect = VisModelJS.Utils.createSVGElement("rect");
-        this.shapeGroup.appendChild(this.BodyRect);
+        this.bodyRect = VisModelJS.Utils.createSVGElement("rect");
+        this.shapeGroup.appendChild(this.bodyRect);
         if (this.nodeView.folded) {
-            this.shapeGroup.appendChild(PegNodeShape.ModuleSymbolMaster.cloneNode());
+            this.shapeGroup.appendChild(PegNodeShape.moduleSymbolMaster.cloneNode());
         }
     }
 
-    FitSizeToContent(): void {
-        this.BodyRect.setAttribute("width", this.nodeWidth.toString());
-        this.BodyRect.setAttribute("height", this.nodeHeight.toString());
+    fitSizeToContent(): void {
+        this.bodyRect.setAttribute("width", this.nodeWidth.toString());
+        this.bodyRect.setAttribute("height", this.nodeHeight.toString());
         if (this.nodeView.childNodes == null && !this.nodeView.folded) {
             var x = (this.nodeWidth / 2).toString();
             var y = (this.nodeHeight + 20).toString();
         }
     }
 
-    UpdateHtmlClass() {
+    updateHtmlClass() {
         this.content.className = "node node-peg";
     }
 }
 
 class PegShapeFactory extends VisModelJS.ShapeFactory {
-    CreateShape(Node: VisModelJS.TreeNodeView): VisModelJS.Shape {
-        return new PegNodeShape(Node);
+    createShape(node: VisModelJS.TreeNodeView): VisModelJS.Shape {
+        return new PegNodeShape(node);
     }
 }
 
@@ -169,19 +169,19 @@ window.onload = function(){
 
     var TopNode = createNodeViewFromP4DJson(<P4DNode>sampleData);
 
-    panel.InitializeView(TopNode);
-    panel.Draw();
-    panel.Viewport.camera.setPositionAndScale(TopNode.centerGx, TopNode.centerGy + panel.Viewport.areaHeight / 3, 1);
+    panel.initializeView(TopNode);
+    panel.draw();
+    panel.viewport.camera.setPositionAndScale(TopNode.centerGx, TopNode.centerGy + panel.viewport.areaHeight / 3, 1);
     panel.addEventListener("dblclick", event => {
         var node = (<VisModelJS.NodeViewEvent>event).node;
         node.folded = !node.folded;
         if (UA.isTrident()) {
-            for (var k in panel.ViewMap) {
-                panel.ViewMap[k].shape.content = null;
+            for (var k in panel.viewMap) {
+                panel.viewMap[k].shape.content = null;
             }
-            panel.Draw(panel.TopNodeView.label, 0, node);
+            panel.draw(panel.topNodeView.label, 0, node);
         } else {
-            panel.Draw(panel.TopNodeView.label, 300, node);
+            panel.draw(panel.topNodeView.label, 300, node);
         }
     });
 };

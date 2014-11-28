@@ -1,238 +1,238 @@
 
 module VisModelJS {
     export class LayoutEngine {
-        DoLayout(PictgramPanel: VisualModelPanel, NodeView: TreeNodeView): void {
+        doLayout(pictgramPanel: VisualModelPanel, nodeView: TreeNodeView): void {
         }
     }
 
     
     export class VerticalTreeLayoutEngine extends LayoutEngine {
-        static SideNodeHorizontalMargin = 32;
-        static SideNodeVerticalMargin = 10;
-        static ChildrenVerticalMargin = 64;
-        static ChildrenHorizontalMargin = 12;
+        static sideNodeHorizontalMargin = 32;
+        static sideNodeVerticalMargin = 10;
+        static childrenVerticalMargin = 64;
+        static childrenHorizontalMargin = 12;
 
-        private Render(ThisNode: TreeNodeView, DivFrag: DocumentFragment, SvgNodeFrag: DocumentFragment, SvgConnectionFrag: DocumentFragment): void {
-            if (ThisNode.visible) {
-                ThisNode.shape.prepareContent();
-                ThisNode.shape.render(DivFrag, SvgNodeFrag, SvgConnectionFrag);
-                if (!ThisNode.folded) {
-                    ThisNode.forEachVisibleAllSubNodes((SubNode: TreeNodeView) => {
-                        this.Render(SubNode, DivFrag, SvgNodeFrag, SvgConnectionFrag);
+        private render(thisNode: TreeNodeView, divFrag: DocumentFragment, SVGNodeFrag: DocumentFragment, SVGConnectionFrag: DocumentFragment): void {
+            if (thisNode.visible) {
+                thisNode.shape.prepareContent();
+                thisNode.shape.render(divFrag, SVGNodeFrag, SVGConnectionFrag);
+                if (!thisNode.folded) {
+                    thisNode.forEachVisibleAllSubNodes((SubNode: TreeNodeView) => {
+                        this.render(SubNode, divFrag, SVGNodeFrag, SVGConnectionFrag);
                     });
                 }
             }
         }
 
-        DoLayout(PictgramPanel: VisualModelPanel, NodeView: TreeNodeView): void {
-            var DivFragment = document.createDocumentFragment();
-            var SvgNodeFragment = document.createDocumentFragment();
-            var SvgConnectionFragment = document.createDocumentFragment();
-            var Dummy = document.createDocumentFragment();
+        doLayout(pictgramPanel: VisualModelPanel, nodeView: TreeNodeView): void {
+            var divFragment = document.createDocumentFragment();
+            var svgNodeFragment = document.createDocumentFragment();
+            var svgConnectionFragment = document.createDocumentFragment();
+            var dummy = document.createDocumentFragment();
 
-            this.Render(NodeView, DivFragment, SvgNodeFragment, SvgConnectionFragment);
+            this.render(nodeView, divFragment, svgNodeFragment, svgConnectionFragment);
 
-            PictgramPanel.ContentLayer.appendChild(DivFragment);
-            PictgramPanel.SVGLayerConnectorGroup.appendChild(SvgConnectionFragment);
-            PictgramPanel.SVGLayerNodeGroup.appendChild(SvgNodeFragment);
-            this.PrepareNodeSize(NodeView);
-            Dummy.appendChild(DivFragment);
-            Dummy.appendChild(SvgConnectionFragment);
-            Dummy.appendChild(SvgNodeFragment);
+            pictgramPanel.contentLayer.appendChild(divFragment);
+            pictgramPanel.SVGLayerConnectorGroup.appendChild(svgConnectionFragment);
+            pictgramPanel.SVGLayerNodeGroup.appendChild(svgNodeFragment);
+            this.prepareNodeSize(nodeView);
+            dummy.appendChild(divFragment);
+            dummy.appendChild(svgConnectionFragment);
+            dummy.appendChild(svgNodeFragment);
 
-            this.Layout(NodeView);
-            PictgramPanel.ContentLayer.appendChild(DivFragment);
-            PictgramPanel.SVGLayer.appendChild(SvgConnectionFragment);
-            PictgramPanel.SVGLayer.appendChild(SvgNodeFragment);
+            this.layout(nodeView);
+            pictgramPanel.contentLayer.appendChild(divFragment);
+            pictgramPanel.SVGLayer.appendChild(svgConnectionFragment);
+            pictgramPanel.SVGLayer.appendChild(svgNodeFragment);
         }
 
-        private PrepareNodeSize(ThisNode: TreeNodeView): void {
-            var Shape = ThisNode.shape;
+        private prepareNodeSize(thisNode: TreeNodeView): void {
+            var Shape = thisNode.shape;
             Shape.nodeWidth;
             Shape.nodeHeight;
-            if (ThisNode.folded) {
+            if (thisNode.folded) {
                 return;
             }
-            ThisNode.forEachVisibleLeftNodes((SubNode: TreeNodeView) => {
-                this.PrepareNodeSize(SubNode);
+            thisNode.forEachVisibleLeftNodes((SubNode: TreeNodeView) => {
+                this.prepareNodeSize(SubNode);
             });
-            ThisNode.forEachVisibleRightNodes((SubNode: TreeNodeView) => {
-                this.PrepareNodeSize(SubNode);
+            thisNode.forEachVisibleRightNodes((SubNode: TreeNodeView) => {
+                this.prepareNodeSize(SubNode);
             });
-            ThisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
-                this.PrepareNodeSize(SubNode);
+            thisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
+                this.prepareNodeSize(SubNode);
             });
         }
 
-        private Layout(ThisNode: TreeNodeView): void {
-            if (!ThisNode.visible) {
+        private layout(thisNode: TreeNodeView): void {
+            if (!thisNode.visible) {
                 return;
             }
-            var Shape = ThisNode.shape;
-            if (!ThisNode.shouldReLayout) {
-                ThisNode.traverseVisibleNode((Node: TreeNodeView) => {
+            var shape = thisNode.shape;
+            if (!thisNode.shouldReLayout) {
+                thisNode.traverseVisibleNode((Node: TreeNodeView) => {
                     Node.shape.fitSizeToContent();
                 });
                 return;
             }
-            ThisNode.shouldReLayout = false;
-            Shape.fitSizeToContent();
-            var TreeLeftX = 0;
-            var ThisNodeWidth = Shape.nodeWidth;
-            var TreeRightX = ThisNodeWidth;
-            var TreeHeight = Shape.nodeHeight;
-            if (ThisNode.folded) {
-                Shape.setHeadRect(0, 0, ThisNodeWidth, TreeHeight);
-                Shape.setTreeRect(0, 0, ThisNodeWidth, TreeHeight);
+            thisNode.shouldReLayout = false;
+            shape.fitSizeToContent();
+            var treeLeftX = 0;
+            var thisNodeWidth = shape.nodeWidth;
+            var treeRightX = thisNodeWidth;
+            var treeHeight = shape.nodeHeight;
+            if (thisNode.folded) {
+                shape.setHeadRect(0, 0, thisNodeWidth, treeHeight);
+                shape.setTreeRect(0, 0, thisNodeWidth, treeHeight);
                 return;
             }
-            if (ThisNode.leftNodes != null) {
-                var LeftNodesWidth = 0;
-                var LeftNodesHeight = -VerticalTreeLayoutEngine.SideNodeVerticalMargin;
-                ThisNode.forEachVisibleLeftNodes((SubNode: TreeNodeView) => {
-                    SubNode.shape.fitSizeToContent();
-                    LeftNodesHeight += VerticalTreeLayoutEngine.SideNodeVerticalMargin;
-                    SubNode.relativeX = -(SubNode.shape.nodeWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
-                    SubNode.relativeY = LeftNodesHeight;
-                    LeftNodesWidth = Math.max(LeftNodesWidth, SubNode.shape.nodeWidth);
-                    LeftNodesHeight += SubNode.shape.nodeHeight;
+            if (thisNode.leftNodes != null) {
+                var leftNodesWidth = 0;
+                var leftNodesHeight = -VerticalTreeLayoutEngine.sideNodeVerticalMargin;
+                thisNode.forEachVisibleLeftNodes((subNode: TreeNodeView) => {
+                    subNode.shape.fitSizeToContent();
+                    leftNodesHeight += VerticalTreeLayoutEngine.sideNodeVerticalMargin;
+                    subNode.relativeX = -(subNode.shape.nodeWidth + VerticalTreeLayoutEngine.sideNodeHorizontalMargin);
+                    subNode.relativeY = leftNodesHeight;
+                    leftNodesWidth = Math.max(leftNodesWidth, subNode.shape.nodeWidth);
+                    leftNodesHeight += subNode.shape.nodeHeight;
                 });
-                var LeftShift = (ThisNode.shape.nodeHeight - LeftNodesHeight) / 2;
-                if (LeftShift > 0) {
-                    ThisNode.forEachVisibleLeftNodes((SubNode: TreeNodeView) => {
-                        SubNode.relativeY += LeftShift;
+                var leftShift = (thisNode.shape.nodeHeight - leftNodesHeight) / 2;
+                if (leftShift > 0) {
+                    thisNode.forEachVisibleLeftNodes((SubNode: TreeNodeView) => {
+                        SubNode.relativeY += leftShift;
                     });
                 }
-                if (LeftNodesHeight > 0) {
-                    TreeLeftX = -(LeftNodesWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
-                    TreeHeight = Math.max(TreeHeight, LeftNodesHeight);
+                if (leftNodesHeight > 0) {
+                    treeLeftX = -(leftNodesWidth + VerticalTreeLayoutEngine.sideNodeHorizontalMargin);
+                    treeHeight = Math.max(treeHeight, leftNodesHeight);
                 }
             }
-            if (ThisNode.rightNodes != null) {
-                var RightNodesWidth = 0;
-                var RightNodesHeight = -VerticalTreeLayoutEngine.SideNodeVerticalMargin;
-                ThisNode.forEachVisibleRightNodes((SubNode: TreeNodeView) => {
-                    SubNode.shape.fitSizeToContent();
-                    RightNodesHeight += VerticalTreeLayoutEngine.SideNodeVerticalMargin;
-                    SubNode.relativeX = (ThisNodeWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin);
-                    SubNode.relativeY = RightNodesHeight;
-                    RightNodesWidth = Math.max(RightNodesWidth, SubNode.shape.nodeWidth);
-                    RightNodesHeight += SubNode.shape.nodeHeight;
+            if (thisNode.rightNodes != null) {
+                var rightNodesWidth = 0;
+                var rightNodesHeight = -VerticalTreeLayoutEngine.sideNodeVerticalMargin;
+                thisNode.forEachVisibleRightNodes((subNode: TreeNodeView) => {
+                    subNode.shape.fitSizeToContent();
+                    rightNodesHeight += VerticalTreeLayoutEngine.sideNodeVerticalMargin;
+                    subNode.relativeX = (thisNodeWidth + VerticalTreeLayoutEngine.sideNodeHorizontalMargin);
+                    subNode.relativeY = rightNodesHeight;
+                    rightNodesWidth = Math.max(rightNodesWidth, subNode.shape.nodeWidth);
+                    rightNodesHeight += subNode.shape.nodeHeight;
                 });
-                var RightShift = (ThisNode.shape.nodeHeight - RightNodesHeight) / 2;
-                if (RightShift > 0) {
-                    ThisNode.forEachVisibleRightNodes((SubNode: TreeNodeView) => {
-                        SubNode.relativeY += RightShift;
+                var rightShift = (thisNode.shape.nodeHeight - rightNodesHeight) / 2;
+                if (rightShift > 0) {
+                    thisNode.forEachVisibleRightNodes((SubNode: TreeNodeView) => {
+                        SubNode.relativeY += rightShift;
                     });
                 }
-                if (RightNodesHeight > 0) {
-                    TreeRightX += RightNodesWidth + VerticalTreeLayoutEngine.SideNodeHorizontalMargin;
-                    TreeHeight = Math.max(TreeHeight, RightNodesHeight);
+                if (rightNodesHeight > 0) {
+                    treeRightX += rightNodesWidth + VerticalTreeLayoutEngine.sideNodeHorizontalMargin;
+                    treeHeight = Math.max(treeHeight, rightNodesHeight);
                 }
             }
 
-            var HeadRightX = TreeRightX;
-            var HeadWidth = TreeRightX - TreeLeftX;
-            Shape.setHeadRect(TreeLeftX, 0, HeadWidth, TreeHeight);
-            TreeHeight += VerticalTreeLayoutEngine.ChildrenVerticalMargin;
+            var headRightX = treeRightX;
+            var headWidth = treeRightX - treeLeftX;
+            shape.setHeadRect(treeLeftX, 0, headWidth, treeHeight);
+            treeHeight += VerticalTreeLayoutEngine.childrenVerticalMargin;
 
-            var ChildrenTopWidth = 0;
-            var ChildrenBottomWidth = 0;
-            var ChildrenHeight = 0;
-            var FormarUnfoldedChildHeight = Infinity;
-            var FoldedNodeRun: TreeNodeView[] = [];
-            var VisibleChildrenCount = 0;
-            if (ThisNode.childNodes != null && ThisNode.childNodes.length > 0) {
-                var IsPreviousChildFolded = false;
+            var childrenTopWidth = 0;
+            var childrenBottomWidth = 0;
+            var childrenHeight = 0;
+            var formarUnfoldedChildHeight = Infinity;
+            var foldedNodeRun: TreeNodeView[] = [];
+            var visibleChildrenCount = 0;
+            if (thisNode.childNodes != null && thisNode.childNodes.length > 0) {
+                var isPreviousChildFolded = false;
 
-                ThisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
-                    VisibleChildrenCount++;
-                    this.Layout(SubNode);
-                    var ChildTreeWidth = SubNode.shape.treeWidth;
-                    var ChildHeadWidth = SubNode.folded ? SubNode.shape.nodeWidth : SubNode.shape.headWidth;
-                    var ChildHeadHeight = SubNode.folded ? SubNode.shape.nodeHeight : SubNode.shape.headHeight;
-                    var ChildHeadLeftSideMargin = SubNode.shape.headLeftLocalX - SubNode.shape.treeLeftLocalX;
-                    var ChildHeadRightX = ChildHeadLeftSideMargin + ChildHeadWidth;
-                    var ChildTreeHeight = SubNode.shape.treeHeight;
-                    var HMargin = VerticalTreeLayoutEngine.ChildrenHorizontalMargin;
+                thisNode.forEachVisibleChildren((subNode: TreeNodeView) => {
+                    visibleChildrenCount++;
+                    this.layout(subNode);
+                    var childTreeWidth = subNode.shape.treeWidth;
+                    var childHeadWidth = subNode.folded ? subNode.shape.nodeWidth : subNode.shape.headWidth;
+                    var childHeadHeight = subNode.folded ? subNode.shape.nodeHeight : subNode.shape.headHeight;
+                    var childHeadLeftSideMargin = subNode.shape.headLeftLocalX - subNode.shape.treeLeftLocalX;
+                    var childHeadRightX = childHeadLeftSideMargin + childHeadWidth;
+                    var childTreeHeight = subNode.shape.treeHeight;
+                    var hMargin = VerticalTreeLayoutEngine.childrenHorizontalMargin;
 
-                    var IsUndeveloped = SubNode.childNodes == null || SubNode.childNodes.length == 0;
-                    var IsFoldedLike = (SubNode.folded || IsUndeveloped) && ChildHeadHeight <= FormarUnfoldedChildHeight;
+                    var isUndeveloped = subNode.childNodes == null || subNode.childNodes.length == 0;
+                    var isFoldedLike = (subNode.folded || isUndeveloped) && childHeadHeight <= formarUnfoldedChildHeight;
 
-                    if (IsFoldedLike) {
-                        SubNode.relativeX = ChildrenTopWidth;
-                        ChildrenTopWidth = ChildrenTopWidth + ChildHeadWidth + HMargin;
-                        FoldedNodeRun.push(SubNode);
+                    if (isFoldedLike) {
+                        subNode.relativeX = childrenTopWidth;
+                        childrenTopWidth = childrenTopWidth + childHeadWidth + hMargin;
+                        foldedNodeRun.push(subNode);
                     } else {
-                        if (IsPreviousChildFolded) {
+                        if (isPreviousChildFolded) {
                             // Arrange the folded nodes between open nodes to equal distance
-                            var WidthDiff = ChildrenTopWidth - ChildrenBottomWidth;
-                            if (WidthDiff < ChildHeadLeftSideMargin) {
-                                SubNode.relativeX = ChildrenBottomWidth;
-                                ChildrenTopWidth = ChildrenBottomWidth + ChildHeadRightX + HMargin;
-                                ChildrenBottomWidth = ChildrenBottomWidth + ChildTreeWidth + HMargin;
-                                if (SubNode.relativeX == 0) {
-                                    for (var i = 0; i < FoldedNodeRun.length; i++) {
-                                        FoldedNodeRun[i].relativeX += ChildHeadLeftSideMargin - WidthDiff;
+                            var widthDiff = childrenTopWidth - childrenBottomWidth;
+                            if (widthDiff < childHeadLeftSideMargin) {
+                                subNode.relativeX = childrenBottomWidth;
+                                childrenTopWidth = childrenBottomWidth + childHeadRightX + hMargin;
+                                childrenBottomWidth = childrenBottomWidth + childTreeWidth + hMargin;
+                                if (subNode.relativeX == 0) {
+                                    for (var i = 0; i < foldedNodeRun.length; i++) {
+                                        foldedNodeRun[i].relativeX += childHeadLeftSideMargin - widthDiff;
                                     }
                                 } else {
-                                    var FoldedRunMargin = (ChildHeadLeftSideMargin - WidthDiff) / (FoldedNodeRun.length + 1)
-                                    for (var i = 0; i < FoldedNodeRun.length; i++) {
-                                        FoldedNodeRun[i].relativeX += FoldedRunMargin * (i + 1);
+                                    var foldedRunMargin = (childHeadLeftSideMargin - widthDiff) / (foldedNodeRun.length + 1)
+                                    for (var i = 0; i < foldedNodeRun.length; i++) {
+                                        foldedNodeRun[i].relativeX += foldedRunMargin * (i + 1);
                                     }
                                 }
                             } else {
-                                SubNode.relativeX = ChildrenTopWidth - ChildHeadLeftSideMargin;
-                                ChildrenBottomWidth = ChildrenTopWidth + ChildTreeWidth - ChildHeadLeftSideMargin + HMargin;
-                                ChildrenTopWidth = ChildrenTopWidth + ChildHeadWidth + HMargin;
+                                subNode.relativeX = childrenTopWidth - childHeadLeftSideMargin;
+                                childrenBottomWidth = childrenTopWidth + childTreeWidth - childHeadLeftSideMargin + hMargin;
+                                childrenTopWidth = childrenTopWidth + childHeadWidth + hMargin;
                             }
                         } else {
-                            var ChildrenWidth = Math.max(ChildrenTopWidth, ChildrenBottomWidth);
-                            SubNode.relativeX = ChildrenWidth;
-                            ChildrenTopWidth = ChildrenWidth + ChildHeadRightX + HMargin;
-                            ChildrenBottomWidth = ChildrenWidth + ChildTreeWidth + HMargin;
+                            var childrenWidth = Math.max(childrenTopWidth, childrenBottomWidth);
+                            subNode.relativeX = childrenWidth;
+                            childrenTopWidth = childrenWidth + childHeadRightX + hMargin;
+                            childrenBottomWidth = childrenWidth + childTreeWidth + hMargin;
                         }
-                        FoldedNodeRun = [];
-                        FormarUnfoldedChildHeight = ChildHeadHeight;
+                        foldedNodeRun = [];
+                        formarUnfoldedChildHeight = childHeadHeight;
                     }
-                    SubNode.relativeX += -SubNode.shape.treeLeftLocalX;
-                    SubNode.relativeY = TreeHeight;
+                    subNode.relativeX += -subNode.shape.treeLeftLocalX;
+                    subNode.relativeY = treeHeight;
 
-                    IsPreviousChildFolded = IsFoldedLike;
-                    ChildrenHeight = Math.max(ChildrenHeight, ChildTreeHeight);
+                    isPreviousChildFolded = isFoldedLike;
+                    childrenHeight = Math.max(childrenHeight, childTreeHeight);
                     //console.log("T" + ChildrenTopWidth + ", B" + ChildrenBottomWidth);
                 });
 
-                var ChildrenWidth = Math.max(ChildrenTopWidth, ChildrenBottomWidth) - VerticalTreeLayoutEngine.ChildrenHorizontalMargin;
-                var ShiftX = (ChildrenWidth - ThisNodeWidth) / 2;
+                var childrenWidth = Math.max(childrenTopWidth, childrenBottomWidth) - VerticalTreeLayoutEngine.childrenHorizontalMargin;
+                var shiftX = (childrenWidth - thisNodeWidth) / 2;
                 
-                if (VisibleChildrenCount == 1) {
-                    ThisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
-                        ShiftX = -SubNode.shape.treeLeftLocalX;
-                        if (!SubNode.hasSideNode || SubNode.folded) {
-                            var ShiftY = 0;
-                            var SubNodeHeight = SubNode.shape.nodeHeight;
-                            var ThisHeight = ThisNode.shape.nodeHeight;
-                            var VMargin = VerticalTreeLayoutEngine.ChildrenVerticalMargin;
-                            if (!SubNode.hasChildren || ThisHeight + VMargin * 2 + SubNodeHeight > TreeHeight) {
-                                ShiftY = TreeHeight - (ThisHeight + VMargin);
+                if (visibleChildrenCount == 1) {
+                    thisNode.forEachVisibleChildren((subNode: TreeNodeView) => {
+                        shiftX = -subNode.shape.treeLeftLocalX;
+                        if (!subNode.hasSideNode || subNode.folded) {
+                            var shiftY = 0;
+                            var subNodeHeight = subNode.shape.nodeHeight;
+                            var thisHeight = thisNode.shape.nodeHeight;
+                            var vMargin = VerticalTreeLayoutEngine.childrenVerticalMargin;
+                            if (!subNode.hasChildren || thisHeight + vMargin * 2 + subNodeHeight > treeHeight) {
+                                shiftY = treeHeight - (thisHeight + vMargin);
                             } else {
-                                ShiftY = SubNodeHeight + VMargin;
+                                shiftY = subNodeHeight + vMargin;
                             }
-                            SubNode.relativeY -= ShiftY;
-                            ChildrenHeight -= ShiftY;
+                            subNode.relativeY -= shiftY;
+                            childrenHeight -= shiftY;
                         }
                     });
                 }
-                TreeLeftX = Math.min(TreeLeftX, -ShiftX);
-                ThisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
-                    SubNode.relativeX -= ShiftX;
+                treeLeftX = Math.min(treeLeftX, -shiftX);
+                thisNode.forEachVisibleChildren((SubNode: TreeNodeView) => {
+                    SubNode.relativeX -= shiftX;
                 });
 
-                TreeHeight += ChildrenHeight;
-                TreeRightX = Math.max(TreeLeftX + ChildrenWidth, HeadRightX);
+                treeHeight += childrenHeight;
+                treeRightX = Math.max(treeLeftX + childrenWidth, headRightX);
             }
-            Shape.setTreeRect(TreeLeftX, 0, TreeRightX - TreeLeftX, TreeHeight);
+            shape.setTreeRect(treeLeftX, 0, treeRightX - treeLeftX, treeHeight);
             //console.log(ThisNode.Label + ": " + (<any>ThisNode.Shape).TreeBoundingBox.toString());
         }
 
