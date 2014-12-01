@@ -1,0 +1,9 @@
+﻿{
+  "name": "my",
+  "version": "0.0.1",
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-tsc": "*",
+    "gulp-uglifyjs": "*"
+  }
+}

@@ -1,3 +1,4 @@
+/// <reference path = "./pointer.d.ts" />
 
 module VisModelJS {
     export class Pointer {
